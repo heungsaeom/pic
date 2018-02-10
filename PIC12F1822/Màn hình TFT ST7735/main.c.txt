@@ -1,0 +1,36 @@
+/* PIC12F1822 with ST7735R TFT display example CCS PIC C code
+   ST7735 TFT display driver for CCS PIC C compiler is required
+   coordinates are (x, y) starting from upper left corner (0, 0)
+*/
+
+// TFT module connections
+#define TFT_CS   PIN_A5
+#define TFT_DC   PIN_A4
+#define TFT_SPI_HARDWARE
+// End TFT module connections
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock = 32000000)
+#include <ST7735_TFT.c>
+#use fast_io(A)
+
+unsigned int8 k = 0;
+char *text = "Hello World!";
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);                      // Set internal oscillator to 8MHz with PLL enabled (32MHz)
+  setup_adc_ports(NO_ANALOGS);                                  // Configure all pins as digital
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  drawtext(28, 10, text, ST7735_YELLOW, ST7735_BLACK, 1);       // Draw text at coordinates (28, 10) with yellow color and black background. Size = 1
+  strcpy(text, "Hello");
+  drawtext(19, 30, text, ST7735_RED, ST7735_BLACK, 3);          // Draw text at coordinates (19, 30) with red color and black background. Size = 3
+  strcpy(text, "World!");
+  drawtext(10, 70, text, ST7735_CYAN, ST7735_BLACK, 3);         // Draw text at coordinates (10, 70) with cyan color, black background. Size = 3
+  while(TRUE){
+    sprintf(text,"%03u",k);                                     // Place k into text with 3 numbers max and zeroes
+    drawtext(37, 120, text,  ST7735_GREEN, ST7735_BLACK, 3);    // Draw text at coordinates (37, 120) with green color and black background. Size = 3
+    delay_ms(500);
+    k++;
+  }
+}

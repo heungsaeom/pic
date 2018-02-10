@@ -1,0 +1,189 @@
+/* PIC16F887 with ST7735 TFT display example C code
+   ST7735 TFT display driver for CCS PIC C compiler is required
+   Coordinates are (x, y) starting from upper left corner (0, 0)
+*/
+
+// TFT module connections
+#define TFT_CS   PIN_D0
+#define TFT_DC   PIN_D1
+#define TFT_SPI_HARDWARE
+// End TFT module connections
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP HS
+#use delay(clock = 20MHz)
+#include <ST7735_TFT.c>
+
+int8 k = 0;
+char *txt = "1.8 Inch ST7735 TFT  display test example";
+void testlines(unsigned int16 color) {
+  unsigned int8 x, y;
+  fillScreen(ST7735_BLACK);
+  for (x=0; x < _width; x+=6) {
+    drawLine(0, 0, x, _height-1, color);
+  }
+  for (y=0; y < _height; y+=6) {
+    drawLine(0, 0, _width-1, y, color);
+  }
+
+  fillScreen(ST7735_BLACK);
+  for (x=0; x < _width; x+=6) {
+    drawLine(_width-1, 0, x, _height-1, color);
+  }
+  for (y=0; y < _height; y+=6) {
+    drawLine(_width-1, 0, 0, y, color);
+  }
+
+  fillScreen(ST7735_BLACK);
+  for (x=0; x < _width; x+=6) {
+    drawLine(0, _height-1, x, 0, color);
+  }
+  for (y=0; y < _height; y+=6) {
+    drawLine(0, _height-1, _width-1, y, color);
+  }
+
+  fillScreen(ST7735_BLACK);
+  for (x=0; x < _width; x+=6) {
+    drawLine(_width-1, _height-1, x, 0, color);
+  }
+  for (y=0; y < _height; y+=6) {
+    drawLine(_width-1, _height-1, 0, y, color);
+  }
+}
+void testfastlines(unsigned int16 color1, unsigned int16 color2) {
+  int16 x, y;
+  fillScreen(ST7735_BLACK);
+  for (y = 0; y < _height; y += 5) {
+    drawFastHLine(0, y, _width, color1);
+  }
+  for (x = 0; x < _width; x += 5) {
+    drawFastVLine(x, 0, _height, color2);
+  }
+}
+void testdrawrects(unsigned int16 color) {
+  int16 x;
+  fillScreen(ST7735_BLACK);
+  for (x = 0; x < _width; x+=6) {
+    drawRect(_width/2 -x/2, _height/2 -x/2 , x, x, color);
+  }
+}
+void testfillrects(unsigned int16 color1, unsigned int16 color2) {
+  int16 x;
+  fillScreen(ST7735_BLACK);
+  for (x = _width - 1; x > 6; x -= 6) {
+    fillRect(_width/2 -x/2, _height/2 -x/2 , x, x, color1);
+    drawRect(_width/2 -x/2, _height/2 -x/2 , x, x, color2);
+  }
+}
+void testfillcircles(unsigned int8 radius, unsigned int16 color) {
+  int16 x, y;
+  for (x = radius; x < _width; x += radius * 2) {
+    for (y = radius; y < _height; y += radius * 2) {
+      fillCircle(x, y, radius, color);
+    }
+  }
+}
+void testdrawcircles(unsigned int8 radius, unsigned int16 color) {
+  int16 x, y;
+  for (x = 0; x < _width + radius; x += radius * 2) {
+    for (y = 0; y < _height + radius; y += radius * 2) {
+      drawCircle(x, y, radius, color);
+    }
+  }
+}
+void testroundrects() {
+  int8 i, t;
+  unsigned int16 color = 100;
+  fillScreen(ST7735_BLACK);
+  for(t = 0 ; t <= 4; t += 1) {
+    unsigned int8 x = 0, y = 0, w = _width - 2, h = _height - 2;
+    for(i = 0 ; i <= 16; i++) {
+      drawRoundRect(x, y, w, h, 5, color);
+      x += 2;
+      y += 3;
+      w -= 4;
+      h -= 6;
+      color += 1100;
+    }
+    color += 100;
+  }
+}
+void testtriangles() {
+  unsigned int8 t, w, x, y, z;
+  unsigned int16 color = 0xF800;
+  fillScreen(ST7735_BLACK);
+  w = _width/2, x = _height - 1, y = 0, z = _width;
+  for(t = 0 ; t <= 15; t++) {
+    drawTriangle(w, y, y, x, z, x, color);
+    x -= 4;
+    y += 4;
+    z -= 4;
+    color += 100;
+  }
+}
+void mediabuttons() {
+  // play
+  fillScreen(ST7735_BLACK);
+  fillRoundRect(25, 10, 78, 60, 8, ST7735_WHITE);
+  fillTriangle(42, 20, 42, 60, 90, 40, ST7735_RED);
+  delay_ms(500);
+  // pause
+  fillRoundRect(25, 90, 78, 60, 8, ST7735_WHITE);
+  fillRoundRect(39, 98, 20, 45, 5, ST7735_GREEN);
+  fillRoundRect(69, 98, 20, 45, 5, ST7735_GREEN);
+  delay_ms(500);
+  // play color
+  fillTriangle(42, 20, 42, 60, 90, 40, ST7735_BLUE);
+  delay_ms(50);
+  // pause color
+  fillRoundRect(39, 98, 20, 45, 5, ST7735_RED);
+  fillRoundRect(69, 98, 20, 45, 5, ST7735_RED);
+  // play color
+  fillTriangle(42, 20, 42, 60, 90, 40, ST7735_GREEN);
+}
+void main(){
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  drawtext(0, 5, txt, ST7735_WHITE, ST7735_BLACK, 1);
+  setTextWrap(false);
+  strcpy (txt, "Hello World!");
+  drawtext(0, 30, txt, ST7735_RED, ST7735_BLACK, 1);
+  drawtext(0, 47, txt, ST7735_YELLOW, ST7735_BLACK, 2);
+  drawtext(0, 80, txt, ST7735_MAGENTA, ST7735_BLACK, 3);
+  drawtext(0, 120, txt, ST7735_CYAN, ST7735_BLACK, 4);
+  delay_ms(5000);
+  fillScreen(ST7735_BLACK);
+  drawFastHLine(0, 53, _width,  ST7735_WHITE);
+  drawFastHLine(0, 106, _width, ST7735_WHITE);
+  while(k++ < 20){
+    sprintf(txt,"%02u",k);
+    drawtext(59, 25, txt,  ST7735_GREEN, ST7735_BLACK, 1);
+    drawtext(54, 75, txt,  ST7735_BLUE,  ST7735_BLACK, 2);
+    drawtext(49, 125, txt, ST7735_RED,  ST7735_BLACK, 3);
+    delay_ms(500);
+  }
+  testlines(ST7735_YELLOW);
+  delay_ms(1000);
+  testfastlines(ST7735_RED, ST7735_BLUE);
+  delay_ms(1000);
+  testdrawrects(ST7735_GREEN);
+  delay_ms(1000);
+  testfillrects(ST7735_YELLOW, ST7735_MAGENTA);
+  delay_ms(1000);
+  fillScreen(ST7735_BLACK);
+  testfillcircles(10, ST7735_BLUE);
+  testdrawcircles(10, ST7735_WHITE);
+  delay_ms(1000);
+  testroundrects();
+  delay_ms(1000);
+  testtriangles();
+  delay_ms(1000);
+  mediabuttons();
+  delay_ms(1000);
+  while(TRUE){
+    invertDisplay(true);
+    delay_ms(500);
+    invertDisplay(false);
+    delay_ms(500);
+  }
+}

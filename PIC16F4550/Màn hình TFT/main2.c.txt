@@ -1,0 +1,38 @@
+/* PIC18F4550 microcontroller with ST7735R SPI TFT vertical scrolling example CCS C code
+   ST7735 TFT display driver for CCS PIC C compiler is required
+*/
+
+#define top_to_bottom  0
+#define bottom_to_top  1
+#define TFA  0                                        // Top Fixed Area 0 pixel
+#define BFA  0                                        // Bottom Fixed Area 0 pixel
+
+// TFT module connections
+#define TFT_CS  PIN_D1
+#define TFT_DC  PIN_D0
+#define TFT_SPI_HARDWARE
+// End TFT module connections
+
+#include <18F4550.h>
+#fuses NOMCLR HSPLL PLL2 CPUDIV1
+#use delay(clock = 48000000)
+#include <ST7735_TFT.c>
+#use fast_io(D)
+
+char *txt = "ST7735 TFT vertical  scrolling";
+unsigned int8 scroll = 0;
+void main(){
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  drawtext(0, 5, txt, ST7735_WHITE, ST7735_BLACK, 1);
+  strcpy (txt, "Hello World!");
+  drawtext(28, 100, txt, ST7735_CYAN, ST7735_BLACK, 1);
+  setScrollDefinition(TFA, BFA, top_to_bottom);
+  while(TRUE){
+    VerticalScroll(scroll + TFA);
+    scroll++;
+    if(scroll >= (_height - TFA - BFA))
+      scroll = 0;
+    delay_ms(100);
+  }
+}

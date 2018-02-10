@@ -1,0 +1,66 @@
+// 5-Channel RF remote control using PIC18F4550 receiver CCS C code
+
+#include <18F4550.h>
+#fuses NOMCLR INTRC_IO
+#use delay(clock = 8000000)
+#use fast_io(B)
+
+unsigned int32 remote_code;
+short remote_read(){
+  int8 i;
+  unsigned int16 count = 0;
+  // Check 9ms pulse (remote control sends logic high)
+  while((input(PIN_B0) == 1) && (count < 600)){
+    count++;
+    delay_us(10);}
+  if( (count > 599) || (count < 500))          // NEC protocol?
+    return FALSE;                          
+  count = 0;
+  // Check 4.5ms space (remote control sends logic low)
+  while((input(PIN_B0) == 0) && (count < 300)){
+    count++;
+    delay_us(10);}
+  if( (count > 299) || (count < 220))          // NEC protocol?
+    return FALSE;                         
+  // Read message (32 bits)
+  for(i = 0; i < 32; i++){
+    count = 0;
+    while((input(PIN_B0) == 1) && (count < 45)){
+      count++;
+      delay_us(10);}
+    if( (count > 44) || (count < 25))          // NEC protocol?
+      return FALSE;                         
+    count = 0;
+    while((input(PIN_B0) == 0) && (count < 120)){
+      count++;
+      delay_us(10);}
+    if( (count > 119) || (count < 25))         // NEC protocol?
+      return FALSE;
+    if( count > 60)                            // If space width > 1ms
+      bit_set(remote_code, (31 - i));          // Write 1 to bit (31 - i)
+    else                                       // If space width < 1ms
+      bit_clear(remote_code, (31 - i));        // Write 0 to bit (31 - i)
+  }
+  return TRUE;
+}
+void main(){
+  setup_oscillator(OSC_8MHZ);                  // Set internal oscillator to 8MHz
+  setup_adc_ports(NO_ANALOGS);                 // Configure AN pins as digital
+  output_b(0);                                 // PORTB initial state
+  set_tris_b(1);                               // Configure RB0 as digital input pin
+  while(TRUE){
+    while(!input(PIN_B0));                     // Wait until RB0 pin goes high
+    if(remote_read()){
+      if(remote_code == 0x40BF00FF)
+        output_toggle(PIN_B1);
+      if(remote_code == 0x40BF807F)
+        output_toggle(PIN_B2);
+      if(remote_code == 0x40BF40BF)
+        output_toggle(PIN_B3);
+      if(remote_code == 0x40BF20DF)
+        output_toggle(PIN_B4);
+      if(remote_code == 0x40BFA05F)
+        output_toggle(PIN_B5);
+      }
+  }
+}

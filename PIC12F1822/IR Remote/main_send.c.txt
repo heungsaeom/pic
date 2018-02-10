@@ -1,0 +1,67 @@
+// Extended NEC protocol IR remote control transmitter CCS C code
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock=32000000)
+#use fast_io(A)
+#use pwm (PWM1, FREQUENCY = 38KHz, DUTY = 25, PWM_OFF)
+
+void send_signal(unsigned int32 number){
+  int8 i;
+  // Send 9ms burst
+  pwm_on();
+  delay_ms(9);
+  // Send 4.5ms space
+  pwm_off();
+  delay_us(4500);
+  // Send data
+  for(i = 0; i < 32; i++){
+    // If bit is 1 send 560us pulse and 1680us space
+    if(bit_test(number, 31 - i)){
+      pwm_on();
+      delay_us(560);
+      pwm_off();
+      delay_us(1680);
+    }
+    // If bit is 0 send 560us pulse and 560us space
+    else{
+      pwm_on();
+      delay_us(560);
+      pwm_off();
+      delay_us(560);
+    }
+  }
+  // Send end bit
+  pwm_on();
+  delay_us(560);
+  pwm_off();
+  delay_us(560);
+}
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);            // Set internal oscillator to 32MHz (8MHz and PLL)
+  output_a(0);
+  set_tris_a(0x3B);                                   // Configure RA2 pin as output and others as inputs
+  port_a_pullups(0x3B);                               // Enable internal pull-ups for pins RA0,RA1,RA3,RA4 & RA5
+  while(TRUE){
+    while(!input(PIN_A0)){
+      send_signal(0x40BF00FF);
+      delay_ms(500);
+    }
+    while(!input(PIN_A1)){
+      send_signal(0x40BF807F);
+      delay_ms(500);
+    }
+    while(!input(PIN_A3)){
+      send_signal(0x40BF40BF);
+      delay_ms(500);
+    }
+    while(!input(PIN_A4)){
+      send_signal(0x40BF20DF);
+      delay_ms(500);
+    }
+    while(!input(PIN_A5)){
+      send_signal(0x40BFA05F);
+      delay_ms(500);
+    }
+  }
+}

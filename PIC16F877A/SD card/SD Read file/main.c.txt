@@ -1,0 +1,54 @@
+// Read text file from SD card with FAT16 file system CCS C code.
+// Used microcontroller: PIC16F877A
+// Fat16 library and MMC/SD card driver for CCS C compiler must be installed!
+// Use at your own risk!
+
+// SD Card module connections
+#define   SDCARD_SPI_HW
+#define   SDCARD_PIN_SELECT  PIN_D3
+// End SD card module connections
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP                       
+#use delay(clock = 20000000)
+#use fast_io(D)
+#use rs232(xmit = PIN_D2, rcv = PIN_D1, baud = 9600)
+#include <sdcard.c>                              // SD card diver source code
+#include <fat16.c>
+
+int8 file_data[10];
+void open_file(){
+  const int8 *txt = "mytext.txt";                // File name 'mytext.txt'
+  if(fat16_open_file(txt) == 0){
+    printf("OK!");
+    printf("\n\r");                              // Start new line
+    while(fat16_read_data(10, file_data) == 0)   // Read file data
+      printf("%s", file_data);                   // Print file data as string
+    return;
+  }
+  printf("\n\r");                                // Start new line
+  printf("File opening error!");
+}
+void main(){
+  set_tris_d(0);                                 // Configure PORTD pins as outputs
+  delay_ms(2000);
+  printf("\n\r");                                // Start new line
+  printf("*** Read text file from FAT16 SD card using PIC16F877A ***");
+  delay_ms(2000);
+  printf("\n\r");                                // Start new line
+  printf("Initializing FAT16 library ...... ");
+  if(fat16_init() == 0){                         // If FAT16 file system and SD card were successfully initialized
+    printf("OK!");
+    delay_ms(2000);
+    printf("\n\r");                              // Start new line
+    printf("Opening file: 'mytext.txt'...... ");
+    open_file();
+  }
+  else {                                         // Problem occurred while the initialization
+    printf("\n\r");                              // Start new line
+    printf("Initialization error!");
+  }
+  printf("\n\r");                                // Start new line
+  printf("*** END ***");
+  while(TRUE) ;                                  // Endless loop
+}

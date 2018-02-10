@@ -1,0 +1,21 @@
+// PIC16F877A external interrupt example CCS C code
+// https://simple-circuit.com/
+
+#include <16F877A.h>
+#use delay(crystal=8000000)
+
+#INT_EXT
+void ext_isr(void)
+{
+   clear_interrupt(INT_EXT);       // Clear external interrupt flag bit
+   output_toggle(PIN_C0);
+}
+void main()
+{
+   output_low(PIN_C0);
+   ext_int_edge(H_TO_L);           // External interrupt edge from high to low
+   clear_interrupt(INT_EXT);       // Clear external interrupt flag bit
+   enable_interrupts(INT_EXT);     // Enable external interrupt
+   enable_interrupts(GLOBAL);      // Enable global interrupts
+   while(TRUE) ; // Endless loop
+}

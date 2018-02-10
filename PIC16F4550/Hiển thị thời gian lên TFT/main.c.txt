@@ -1,0 +1,313 @@
+/* Real time clock with remote control using PIC18F4550 CCS C code
+   1.8" ST7735R with balck tap (ST7735S) SPI TFT display is used to diplay time and date
+   DS1307 RTC is used as real time clock chip
+   DS1307 Uses I2C protocol
+   Remote control: TV RC5 IR remote control
+   ST7735 TFT display driver for CCS PIC C compiler is required
+*/
+
+// TFT module connections
+#define TFT_CS  PIN_D1
+#define TFT_DC  PIN_D0
+#define TFT_SPI_HARDWARE
+// End TFT module connections
+
+#include <18F4550.h>
+#fuses NOMCLR HSPLL PLL2 CPUDIV1
+#use delay(clock = 48000000)
+#include <ST7735_TFT.c>
+#use fast_io(B)
+#define IR_Sensor PIN_B2
+#use I2C(master, SDA = PIN_D3, SCL = PIN_D2)
+
+int1 toggle0, toggle;
+char *text = "TIME:";
+char time[]       = "  :  :  "  ;
+char calendar[] = "  /  /20  ";
+unsigned int8 second, second10, minute, minute10, hour, hour10, date,
+              date10, month, month10, year, year10, day0, day, i, j ;
+unsigned int16 ir_code, count;
+int8 test_pulse(){
+  count = 0;
+  SET_TIMER1(0);
+  while(!input(IR_Sensor) && (count < 3000))
+    count = GET_TIMER1();
+  if((count > 2999) || (count < 1000))
+    return 0;
+  if(count > 1800)
+    return 1;
+  else
+    return 2;
+}
+int8 test_space(){
+  count = 0;
+  SET_TIMER1(0);
+  while(input(IR_Sensor) && (count < 3000))
+    count = GET_TIMER1();
+  if((count > 2999) || (count < 1000))
+    return 0;
+  if(count > 1800)
+    return 1;
+  else
+    return 2;
+}
+// Follow the RC5 state machine to understand
+short remote_read(){
+  int8 m = 0, check;
+  mid1:
+  check = test_pulse();
+  if(check == 0)
+    return FALSE;
+  bit_set(ir_code, 13 - m);
+  m++;
+  if(m > 13)  return TRUE;
+  if(check == 1)
+    goto mid0;
+  else
+    goto start1;
+  mid0:
+  check = test_space();
+  if((check == 0) && (m != 13))
+    return FALSE;
+  bit_clear(ir_code, 13 - m);
+  m++;
+  if(m > 13) return TRUE;
+  if(check == 1)
+    goto mid1;
+  else
+    goto start0;
+  start1:
+  check = test_space();
+  if(check != 2)
+    return FALSE;
+  goto mid1;
+  start0:
+  check = test_pulse();
+  if(check != 2)
+    return FALSE;
+  goto mid0;
+}
+void display_day(){
+  switch(day){
+    case 1: strcpy (text, "SUNDAY");
+      drawtext(28, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 2: strcpy (text, "MONDAY");
+      drawtext(28, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 3: strcpy (text, "TUESDAY");
+      drawtext(22, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 4: strcpy (text, "WEDNESDAY");
+      drawtext(10, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 5: strcpy (text, "THURSDAY");
+      drawtext(16, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 6: strcpy (text, "FRIDAY");
+      drawtext(28, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+    case 7: strcpy (text, "SATURDAY");
+      drawtext(16, 105, text, ST7735_CYAN, ST7735_BLACK, 2); break;
+  }
+}
+void ds1307_display(){
+  strcpy (time, "  :  :  ");
+  strcpy (calendar, "  /  /20  ");
+  second10  =  (second & 0x70) >> 4;
+  second = second & 0x0F;
+  minute10  =  (minute & 0x70) >> 4;
+  minute = minute & 0x0F;
+  hour10  =  (hour & 0x30) >> 4;
+  hour = hour & 0x0F;
+  date10  =  (date & 0x30) >> 4;
+  date = date & 0x0F;
+  month10  =  (month & 0x10) >> 4;
+  month = month & 0x0F;
+  year10  =  (year & 0xF0) >> 4;
+  year = year & 0x0F;
+  time[7]  = second  + 48;
+  time[6]  = second10  + 48;
+  time[4]  = minute  + 48;
+  time[3]  = minute10  + 48;
+  time[1]  = hour  + 48;
+  time[0]  = hour10  + 48;
+  calendar[9]  = year  + 48;
+  calendar[8]  = year10  + 48;
+  calendar[4]  = month + 48;
+  calendar[3]  = month10 + 48;
+  calendar[1]  = date + 48;
+  calendar[0]  = date10 + 48;
+  drawtext(16, 41, time, ST7735_GREEN, ST7735_BLACK, 2);
+  drawtext(4, 137, calendar, ST7735_YELLOW, ST7735_BLACK, 2);
+  if(day0 != day){
+    day0 = day;
+    fillRect(8, 105, 112, 15, ST7735_BLACK);
+  }
+  display_day();
+}
+void ds1307_write(unsigned int8 address, data_){
+  i2c_start();                                        // Start I2C
+  i2c_write(0xD0);                                    // DS1307 address
+  i2c_write(address);                                 // Send register address
+  i2c_write(data_);                                   // Write data to the selected register
+  i2c_stop();                                         // Stop I2C
+}
+void ds1307_read(){
+  i2c_start();                                        // Start I2C protocol
+  i2c_write(0xD0);                                    // DS1307 address
+  i2c_write(0);                                       // Send register address
+  i2c_start();                                        // Restart I2C
+  i2c_write(0xD1);                                    // Initialize data read
+  second =i2c_read(1);                                // Read seconds from register 0
+  minute =i2c_read(1);                                // Read minuts from register 1
+  hour = i2c_read(1);                                 // Read hour from register 2
+  day = i2c_read(1);                                  // Read day from register 3
+  date = i2c_read(1);                                 // Read date from register 4
+  month = i2c_read(1);                                // Read month from register 5
+  year = i2c_read(0);                                 // Read year from register 6
+  i2c_stop();                                         // Stop I2C protocol
+}
+int8 edit(int8 parameter, unsigned int8 xx, unsigned int8 yy, unsigned int16 color){
+  ir_code = 0;
+  while(TRUE){
+    if(ir_code == 0x20){
+      ir_code = 0;
+      parameter++;
+      if(i == 1 && parameter > 23)
+        parameter = 0;
+      if(i == 2 && parameter > 59)
+        parameter = 0;
+      if(i == 3 && parameter > 31)
+        parameter = 1;
+      if(i == 4 && parameter > 12)
+        parameter = 1;
+      if(i == 5 && parameter > 99)
+        parameter = 0;
+    }
+    if(ir_code == 0x21){
+      ir_code = 0;
+      if(i == 1 && parameter < 1)
+        parameter = 24;
+      if(i == 2 && parameter < 1)
+        parameter = 60;
+      if(i == 3 && parameter < 2)
+        parameter = 32;
+      if(i == 4 && parameter < 2)
+        parameter = 13;
+      if(i == 5 && parameter < 1)
+        parameter = 100;
+      parameter--;
+    }
+    sprintf(text,"%02u", parameter);
+    drawtext(xx, yy, text, color, ST7735_BLACK, 2);
+    j = 0;
+    while((ir_code != 0x20) && (ir_code != 0x21) && ((ir_code != 0x3B) || (toggle0 == toggle)) && (j < 25)){
+      j++;
+      delay_ms(10);
+    }
+    strcpy (text, "  ");
+    drawtext(xx, yy, text, color, ST7735_BLACK, 2);
+    j = 0;
+    while((ir_code != 0x20) && (ir_code != 0x21) && ((ir_code != 0x3B) || (toggle0 == toggle)) && (j < 25)){
+      j++;
+      delay_ms(10);
+    }
+    if((ir_code == 0x3B) && (toggle0 != toggle)){
+      toggle0 = toggle;
+      sprintf(text,"%02u", parameter);
+      drawtext(xx, yy, text, color, ST7735_BLACK, 2);
+      return parameter;
+    }
+  }  
+}
+#INT_EXT2                                             // External interrupt (INT2) ISR
+void ext2_isr(void){
+  if(remote_read()){
+    toggle = bit_test(ir_code, 11);
+    ir_code &= 0x07FF;
+  }
+  clear_interrupt(INT_EXT2);
+}
+void main(){
+  setup_adc_ports(NO_ANALOGS);                        // Configure AN pins as digital
+  enable_interrupts(GLOBAL);                          // Enable global interrupts
+  ext_int_edge(2, H_TO_L);
+  clear_interrupt(INT_EXT2);                          // Clear RA IOC flag bit
+  SETUP_TIMER_1(T1_INTERNAL | T1_DIV_BY_8);
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  drawtext(36, 9, text, ST7735_RED, ST7735_BLACK, 2);
+  strcpy (text, "DATE:");
+  drawtext(36, 73, text, ST7735_MAGENTA, ST7735_BLACK, 2);
+  while(TRUE){
+    if((ir_code == 0x3B) && (toggle0 != toggle)){
+      toggle0 = toggle;
+      // Convert BCD to decimal
+      minute = minute + minute10 * 10;
+      hour = hour + hour10 * 10;
+      date = date + date10 * 10;
+      month = month + month10 * 10;
+      year = year + year10 * 10;
+      // End conversion
+      i = 1;
+      hour = edit(hour, 16, 41, ST7735_GREEN);
+      i = 2;
+      minute = edit(minute, 52, 41, ST7735_GREEN);
+      ir_code = 0;
+      while(TRUE){
+        if(ir_code == 0x20){
+          ir_code = 0;
+          day++;
+          if(day > 7)  day = 1;
+        }
+        if(ir_code == 0x21){
+          ir_code = 0;
+          if(day < 2)  day = 8;
+          day--;
+        }
+        display_day();
+        j = 0;
+        while((ir_code != 0x20) && (ir_code != 0x21) && ((ir_code != 0x3B) || (toggle0 == toggle)) && (j < 25)){
+          j++;
+          delay_ms(10);
+        }
+        fillRect(4, 105, 120, 14, ST7735_BLACK);
+        j = 0;
+        while((ir_code != 0x20) && (ir_code != 0x21) && ((ir_code != 0x3B) || (toggle0 == toggle)) && (j < 25)){
+          j++;
+          delay_ms(10);
+        }
+        if((ir_code == 0x3B) && (toggle0 != toggle)){
+          toggle0 = toggle;
+          display_day();
+          break;
+        }
+      }
+      i = 3;
+      date = edit(date, 4, 137, ST7735_YELLOW); 
+      i = 4;
+      month = edit(month, 40, 137, ST7735_YELLOW);
+      i = 5;
+      year = edit(year, 100, 137, ST7735_YELLOW);      
+      ir_code = 0;
+      // Convert decimal to BCD
+      minute = ((minute/10) << 4) + (minute % 10);
+      hour = ((hour/10) << 4) + (hour % 10);
+      date = ((date/10) << 4) + (date % 10);
+      month = ((month/10) << 4) + (month % 10);
+      year = ((year/10) << 4) + (year % 10);
+      // End conversion
+      // Save all parametrs in DS1307 chip
+      disable_interrupts(INT_EXT2);                   // Disable INT2
+      ds1307_write(1, minute);
+      ds1307_write(2, hour);
+      ds1307_write(3, day);
+      ds1307_write(4, date);
+      ds1307_write(5, month);
+      ds1307_write(6, year);
+      ds1307_write(0, 0);
+      enable_interrupts(INT_EXT2);                    // Enable INT2
+      // End saving
+    }
+    disable_interrupts(INT_EXT2);                     // Disable INT2
+    ds1307_read();                                    // Read data from DS1307 RTCC
+    ds1307_display();                                 // Diaplay time and calendar
+    enable_interrupts(INT_EXT2);                      // Enable INT2
+    delay_ms(100);
+  }
+}

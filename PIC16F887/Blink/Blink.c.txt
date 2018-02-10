@@ -1,0 +1,17 @@
+/* LED blink with PIC16F887 microcontroller
+   Internal oscillator used @ 8MHz
+*/
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP INTRC_IO
+#use delay(clock = 8MHz)
+
+void main(){
+  setup_oscillator(OSC_8MHZ);                         // Set the internal oscillator to 8MHz
+    while(TRUE){                                      // Endless loop
+      output_high(PIN_A0);                            // LED ON
+      delay_ms(500);                                  // Wait 1/2 second
+      output_low(PIN_A0);                             // LED OFF
+      delay_ms(500);                                  // Wait 1/2 second
+    }
+}

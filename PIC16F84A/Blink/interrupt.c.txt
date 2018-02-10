@@ -1,0 +1,23 @@
+// PIC16F84A external interrupt example
+// https://simple-circuit.com/
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(crystal=8000000)
+
+#INT_EXT
+void ext_isr(void)
+{
+ output_toggle(PIN_A0);
+}
+
+void main()
+{
+  output_low(PIN_A0);
+  ext_int_edge(H_TO_L);       // Interrupt on falling edge of RB0/INT pin
+  clear_interrupt(INT_EXT);   // Clear RB0/INT external interrupt flag bit
+  enable_interrupts(INT_EXT); // Enable RB0/INT external interrupt
+  enable_interrupts(GLOBAL);  // Enable all unmasked interrupt
+
+  while(TRUE) ;               // Endless loop
+}

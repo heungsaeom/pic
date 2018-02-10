@@ -1,0 +1,70 @@
+// 5-Channel RF remote control using PIC18F4550 transmitter CCS C code
+
+#include <18F4550.h>
+#fuses NOMCLR INTRC_IO
+#use delay(clock = 8000000)
+#use fast_io(B)
+#use fast_io(D)
+
+void send_signal(unsigned int32 number){
+  int8 i;
+  // Send 9ms pulse
+  output_high(PIN_D0);
+  delay_ms(9);
+  // Send 4.5ms space
+  output_low(PIN_D0);
+  delay_us(4500);
+  // Send data
+  for(i = 0; i < 32; i++){
+    // If bit is 1 send 560us pulse and 1680us space
+    if(bit_test(number, 31 - i)){
+      output_high(PIN_D0);
+      delay_us(560);
+      output_low(PIN_D0);
+      delay_us(1680);
+    }
+    // If bit is 0 send 560us pulse and 560us space
+    else{
+      output_high(PIN_D0);
+      delay_us(560);
+      output_low(PIN_D0);
+      delay_us(560);
+    }
+  }
+  // Send end bit
+  output_high(PIN_D0);
+  delay_us(560);
+  output_low(PIN_D0);
+  delay_us(560);
+}
+void main(){
+  setup_oscillator(OSC_8MHZ);                 // Set internal oscillator to 8MHz
+  setup_adc_ports(NO_ANALOGS);                // Configure AN pins as digital
+  output_b(0);                                // PORTB initial state
+  set_tris_b(0x1F);                           // Configure RB0-to-RB4 as inputs
+  port_b_pullups(TRUE);                       // Enable PORTB internal pull-ips
+  output_d(0);                                // PORTD initial state
+  set_tris_d(0);                              // Configure PORTD pins as outputs
+  while(TRUE){
+    while(!input(PIN_B0)){
+      send_signal(0x40BF00FF);
+      delay_ms(500);
+    }
+    while(!input(PIN_B1)){
+      send_signal(0x40BF807F);
+      delay_ms(500);
+    }
+    while(!input(PIN_B2)){
+      send_signal(0x40BF40BF);
+      delay_ms(500);
+    }
+    while(!input(PIN_B3)){
+      send_signal(0x40BF20DF);
+      delay_ms(500);
+    }
+    while(!input(PIN_B4)){
+      send_signal(0x40BFA05F);
+      delay_ms(500);
+    }
+  }
+}

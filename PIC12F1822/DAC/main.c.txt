@@ -1,0 +1,23 @@
+/* PIC12F1822 DAC Module Example CCS C code
+   DAC output (DACOUT) on RA0 pin
+*/
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO PLL_SW
+#device ADC = 8                                       // 8-bit ADC resolution
+#use delay(clock=32000000)
+
+unsigned int16 i=0;
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);            // Set internal oscillator to 8MHz with PLL enabled (32MHz)
+  setup_adc(ADC_CLOCK_DIV_32);                        // Set ADC conversion time to 32Tosc
+  setup_adc_ports(sAN1);                              // Configure AN1 pin as analog
+  set_adc_channel(1);                                 // Select channel AN1
+  setup_dac(DAC_VSS_VREF | DAC_OUTPUT);               // Negative source is VSS and positive source is VDD and output enabled
+  while(TRUE){
+    i = read_adc();                                   // Read analog value from AN1 and store in i
+    i = (i * 31)/255;
+    dac_write(i);                                     // Write DAC value according to i
+    delay_ms(10);
+  }
+}

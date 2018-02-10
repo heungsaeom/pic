@@ -1,0 +1,46 @@
+/* Interfacing PIC16F887 with LM35 analog temperature sensor CCS C code
+   The LM35 sensor has linear +10mV/°C scale factor
+   Internal oscillator used @ 8MHz
+*/
+
+//LCD module connections
+#define LCD_RS_PIN PIN_D0
+#define LCD_RW_PIN PIN_D1
+#define LCD_ENABLE_PIN PIN_D2
+#define LCD_DATA4 PIN_D3
+#define LCD_DATA5 PIN_D4
+#define LCD_DATA6 PIN_D5
+#define LCD_DATA7 PIN_D6
+//End LCD module connections
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP INTRC_IO
+#device ADC = 10
+#use delay(clock = 8MHz)
+#include <lcd.c>
+
+char temperature[] = " 00.0 C";
+unsigned int16 temp;
+void main(){
+  setup_oscillator(OSC_8MHZ);                    // Set the internal oscillator to 8MHz
+  setup_adc(ADC_CLOCK_INTERNAL);                 // ADC Module uses its internal oscillator
+  setup_adc_ports(sAN0);                         // Configure AN0 pin as analog
+  set_adc_channel(0);                            // Select channel 0 (AN0)
+  lcd_init();                                    // Initialize LCD module
+  lcd_putc('\f');                                // Clear LCD
+  lcd_gotoxy(3, 1);                              // Go to column 3 row 1
+  printf(lcd_putc, "Temperature:");
+  while(TRUE){
+    delay_ms(1000);
+    temp = read_adc() * 0.489;                   // Read analog voltage and convert it to degree Celsius (0.489 = 500/1023)
+    if (temp > 99)
+      temperature[0]  = 1 + 48;                  // Put 1 (of hundred)
+    else
+      temperature[0]  = ' ';                     // Put space
+    temperature[1]  = (temp / 10) % 10  + 48;
+    temperature[2]  =  temp % 10  + 48;
+    temperature[5] = 223;                        // Degree symbol
+    lcd_gotoxy(5, 2);                            // Go to column 5 row 2
+    printf(lcd_putc, temperature);               // Display LM35 temperature result
+  }
+}

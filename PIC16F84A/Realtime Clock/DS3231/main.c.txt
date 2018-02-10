@@ -1,0 +1,136 @@
+// Real time clock - calendar with DS3231 and PIC16F84A CCS C code.
+
+//LCD module connections
+#define LCD_RS_PIN     PIN_B0
+#define LCD_RW_PIN     PIN_B1
+#define LCD_ENABLE_PIN PIN_B2
+#define LCD_DATA4      PIN_B3
+#define LCD_DATA5      PIN_B4
+#define LCD_DATA6      PIN_B5
+#define LCD_DATA7      PIN_B6
+//End LCD module connections
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(clock = 8000000)
+#use fast_io(A)
+#use fast_io(B)
+#include <lcd.c>
+#use I2C(MASTER, SDA=PIN_A0, SCL=PIN_A1, FAST=100000)
+
+
+int8 i, second, minute, hour, date, month, year;
+int8 bcd_to_decimal(number){                     // Convert BCD to decimal function
+  return((number >> 4) * 10 + (number & 0x0F));
+}
+int8 decimal_to_bcd(number){                     // Convert decimal to BCD function
+  return(((number / 10) << 4) + (number % 10));
+}
+void ds3231_display(){
+  second = bcd_to_decimal(second);
+  minute = bcd_to_decimal(minute);
+  hour   = bcd_to_decimal(hour);
+  date   = bcd_to_decimal(date);
+  month  = bcd_to_decimal(month);
+  year   = bcd_to_decimal(year);
+  lcd_gotoxy(13, 1);   
+  printf(lcd_putc,"%02u", second);               // Display seconds
+  lcd_gotoxy(10, 1);   
+  printf(lcd_putc,"%02u", minute);               // Display minutes
+  lcd_gotoxy(7, 1);   
+  printf(lcd_putc,"%02u", hour);                 // Display hours
+  lcd_gotoxy(7, 2);   
+  printf(lcd_putc,"%02u", date);                 // Display date
+  lcd_gotoxy(10, 2);   
+  printf(lcd_putc,"%02u", month);                // Display month
+  lcd_gotoxy(15, 2);   
+  printf(lcd_putc,"%02u", year);                 // Display year
+}
+void blink(){
+  int8 j = 0;
+  while(j < 10 && input(PIN_A2) && input(PIN_A3)){
+    j++;
+    delay_ms(25);
+  }
+}
+unsigned int8 edit(x, y, parameter){
+  while(!input(PIN_A2));                         // Wait until button RB0 is released
+  while(TRUE){
+    while(!input(PIN_A3)){                       // If button RB1 is pressed
+      parameter++;
+      if(i == 0 && parameter > 23)               // If hours > 23 ==> hours = 0
+        parameter = 0;
+      if(i == 1 && parameter > 59)               // If minutes > 59 ==> minutes = 0
+        parameter = 0;
+      if(i == 2 && parameter > 31)               // If date > 31 ==> date = 1
+        parameter = 1;
+      if(i == 3 && parameter > 12)               // If month > 12 ==> month = 1
+        parameter = 1;
+      if(i == 4 && parameter > 99)               // If year > 99 ==> year = 0
+        parameter = 0;
+      lcd_gotoxy(x, y);
+      printf(lcd_putc,"%02u", parameter);        // Display parameter
+      delay_ms(200);                             // Wait 200ms
+    }
+    lcd_gotoxy(x, y);
+    lcd_putc("  ");                              // Display two spaces
+    blink();
+    lcd_gotoxy(x, y);
+    printf(lcd_putc,"%02u", parameter);          // Display parameter
+    blink();
+    if(!input(PIN_A2)){                          // If button RA2 is pressed
+      i++;                                       // Increament 'i' for the next parameter
+      return parameter;                          // Return parameter value and exit
+    }
+  }
+}
+void main(){
+  lcd_init();                                    // Initialize LCD module
+  lcd_putc('\f');                                // LCD clear
+  lcd_gotoxy(1, 1);  lcd_putc("TIME:   :  :");
+  lcd_gotoxy(1, 2);  lcd_putc("DATE:   /  /20");
+  while(TRUE){
+    if(!input(PIN_A2)){                          // If RB0 button is pressed
+      i = 0;
+      hour   = edit(7, 1, hour);
+      minute = edit(10, 1, minute);
+      date   = edit(7, 2, date);
+      month  = edit(10, 2, month);
+      year   = edit(15, 2, year);
+      // Convert decimal to BCD
+      minute = decimal_to_bcd(minute);
+      hour   = decimal_to_bcd(hour);
+      date   = decimal_to_bcd(date);
+      month  = decimal_to_bcd(month);
+      year   = decimal_to_bcd(year);
+      // End conversion
+      // Write data to DS3231 RTC
+      i2c_start();                               // Start I2C protocol
+      i2c_write(0xD0);                           // DS3231 address
+      i2c_write(0);                              // Send register address
+      i2c_write(0);                              // Reset sesonds and start oscillator
+      i2c_write(minute);                         // Write minute value to DS3231
+      i2c_write(hour);                           // Write hour value to DS3231
+      i2c_write(1);                              // Write day value (not used)
+      i2c_write(date);                           // Write date value to DS3231
+      i2c_write(month);                          // Write month value to DS3231
+      i2c_write(year);                           // Write year value to DS3231
+      delay_ms(200);                             // Wait 200ms
+    }
+    i2c_start();                                  // Start I2C protocol
+    i2c_write(0xD0);                              // DS3231 address
+    i2c_write(0);                                 // Send register address
+    i2c_start();                                  // Restart I2C
+    i2c_write(0xD1);                              // Initialize data read
+    second = i2c_read(1);                         // Read seconds from register 0
+    minute = i2c_read(1);                         // Read minuts from register 1
+    hour   = i2c_read(1);                         // Read hour from register 2
+    i2c_read(1);                                  // Read day from register 3 (not used)
+    date   = i2c_read(1);                         // Read date from register 4
+    month  = i2c_read(1);                         // Read month from register 5
+    year   = i2c_read(0);                         // Read year from register 6
+    i2c_stop();                                   // Stop I2C protocol
+    DS3231_display();                             // Diaplay time & calendar
+    delay_ms(50);
+  }
+}

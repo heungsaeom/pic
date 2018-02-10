@@ -1,0 +1,51 @@
+// Wave player using PIC18F4550 microcontroller and SD card.
+ 
+// SD Card module connections
+#define   SDCARD_SPI_HW
+#define   SDCARD_PIN_SELECT  PIN_D2
+// End SD card module connections
+ 
+#include <18F4550.h>
+#fuses NOMCLR HSPLL PLL2 CPUDIV1
+#use delay(clock = 48MHz)
+#use fast_io(D)
+#include <FAT_Lib.c>
+ 
+const int8 *wav = "audio.wav";
+int1 ok = 0;
+int8 i, j, data[32], channel_count;
+ 
+void play(){
+  file_pointer += 44;                        // Skip wave file header (44 bytes)
+  sdcard_read_byte(address_pointer + 22, &channel_count);       // Read number of channels
+  while(fat_read_data(32, data) == 0){
+    for(i = 0; i < 32; i++){
+      set_timer1(0);
+      j = data[i];
+      set_pwm1_duty((int16)j);                   // Update PWM1 duty cycle
+      if(channel_count == 2){                    // If 2-channel wave file (stereo)
+        i++;                                     // increment i
+        j = data[i];
+        set_pwm2_duty((int16)j);                 // Update PWM2 duty cycle
+      }
+      while(get_timer1() < 650);                 // Wait some time (about 62.5us) to update the duty cycles
+    }
+  }
+}
+void main(){
+  delay_ms(2000);
+  setup_ccp1(CCP_PWM);                           // Configure CCP1 as a PWM
+  setup_ccp2(CCP_PWM);                           // Configure CCP2 as a PWM
+  set_pwm1_duty(0);                              // set PWM1 duty cycle to 0
+  set_pwm2_duty(0);                              // set PWM2 duty cycle to 0
+  setup_timer_2(T2_DIV_BY_1, 63, 1);             // Set PWM frequency to maximum with 8-bit resolution
+  setup_timer_1( T1_INTERNAL | T1_DIV_BY_1 );
+  ok |= sdcard_init();                           // Initialize the SD card module
+  ok |= fat_init();                              // Initialize FAT library
+  ok |= fat_open_file(wav);                      // Open the wave file
+  if(ok == 0){
+    play();
+  }
+  set_pwm1_duty(0);                              // set PWM1 duty cycle to 0
+  set_pwm2_duty(0);                              // set PWM2 duty cycle to 0
+}   // End

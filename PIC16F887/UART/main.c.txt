@@ -1,0 +1,35 @@
+// CCS C UART example for PIC16F887 microcontroller
+
+#include <16F887.h>
+#fuses NOMCLR, INTRC_IO, NOBROWNOUT, NOLVP
+#use delay(clock = 8MHz)
+#use rs232(UART1, baud = 9600)
+
+const char message[] = "PIC16F887 microcontroller UART example" ;
+int8 i = 0, j;
+void main(){
+  setup_oscillator(OSC_8MHZ);                    // Set internal oscillator to 8MHz
+  delay_ms(2000);                                // Wait 2 seconds
+  // Print text
+  printf("Hello world!");
+  // Print list of characters
+  printf("\n\r");                                // Start new line
+  while(message[i] != '\0'){
+    putc(message[i]);                            // Write character
+    delay_ms(100);                               // Wait 100 ms
+    i++;                                         // Increment i
+  }
+  // Print numbers
+  printf("\n\r");                                // Start new line
+  for(i = 0; i < 21; i++){
+    printf("%u\n\r", i);                         // Print i and start new line
+    delay_ms(500);
+  }
+  // Receive and send data via UART
+  while(TRUE){
+    if(kbhit()){                                 // If a character available
+      j = getc();                                // UART read
+      putc(j);                                   // Send it back
+    }
+  }
+}

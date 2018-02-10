@@ -1,0 +1,55 @@
+// Interfacing PIC16F877A with cd-rom bipolar stepper motor
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP                       
+#use delay(clock = 8000000)
+#use fast_io(B)
+#use fast_io(D)
+
+unsigned int8 speed_;
+void stepper_move(short direction_){
+  if(direction_){ 
+   output_d(0b00000110);
+   delay_ms(speed_);
+   output_d(0b00000101);
+   delay_ms(speed_);
+   output_d(0b00001001);
+   delay_ms(speed_);
+   output_d(0b00001010);
+   delay_ms(speed_);
+  }
+  else{
+   output_d(0b00000101);
+   delay_ms(speed_);
+   output_d(0b00000110);
+   delay_ms(speed_);
+   output_d(0b00001010);
+   delay_ms(speed_);
+   output_d(0b00001001);
+   delay_ms(speed_);
+  }
+}
+void main(){
+  output_b(0);
+  set_tris_b(0x03);
+  port_b_pullups(TRUE);
+  output_d(0);
+  set_tris_d(0);
+  setup_adc(ADC_CLOCK_DIV_32);      // Set ADC conversion time to 32Tosc
+  setup_adc_ports(AN0);             // Configure AN0 as analog  
+  set_adc_channel(0);               // Select channel 0 input
+  delay_ms(100);                    // Wait 100ms
+  while(TRUE){
+   output_d(0);
+   while(!input(PIN_B0)){
+    speed_ = read_adc();
+    if(speed_ < 2) speed_ = 2;
+    stepper_move(0);
+   }
+   while(!input(PIN_B1)){
+    speed_ = read_adc();
+    if(speed_ < 2) speed_ = 2;
+    stepper_move(1);
+   }
+  }
+}

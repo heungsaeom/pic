@@ -1,0 +1,58 @@
+// DC motor control using PIC16F84A and L293D CCS C code
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(clock = 8000000)
+#use fast_io(A)
+#use fast_io(B)
+#use pwm(output = pin_a0, output = pin_a1, timer = 0, frequency= 500Hz, duty = 0)
+
+unsigned int8 i = 1;
+void main() {
+  port_b_pullups(TRUE);                // Enable PORTB pull-ups
+  output_a(0);                         // PORTA initial state
+  set_tris_a(0);                       // All PORTA pins are configured as outputs
+  output_b(0);                         // PORTB initial state
+  set_tris_b(0x1F);                    // Configure RB0 to RB4 as inputs
+  pwm_off();                           // Turn off all pwm outputs
+  while(TRUE) {
+    if(input(PIN_B0) == 0){            // If RB0 button pressed
+      i++;                             // Increment i by 1 (i = i + 1)
+      if(i > 99){
+        i = 100;
+        output_high(PIN_B7);}          // RB7 LED ON
+      pwm_set_duty_percent(i * 10UL);  // Duty cycle change in tenths %
+      delay_ms(100);      }            // Wait 100ms
+    if(input(PIN_B1) == 0){            // If RB1 button pressed
+      output_low(PIN_B7);              // RB7 LED OFF
+      i--;                             // Decrement i by 1 (i = i - 1)
+      if(i < 1)
+        i = 1;
+      pwm_set_duty_percent(i * 10UL);  // Duty cycle change in tenths %
+      delay_ms(100);      }            // Wait 100ms
+    if(input(PIN_B2) == 0){            // If RB2 button pressed
+      if(input(PIN_B5) == 0){
+        output_low(PIN_B6);            // RB6 LED OFF
+        pwm_off();                     // Turn off pwm for both outputs
+        output_a(0);                   // PORTA pins low
+        delay_ms(100);                 // Wait 100ms
+        pwm_on(PIN_A0);                // Turn pwm on at RA0
+        output_high(PIN_B5);           // RB5 LED ON
+        if(i > 99)
+          output_high(PIN_B7);}}
+    if(input(PIN_B3) == 0){            // If RB3 button pressed
+      if(input(PIN_B6) == 0){
+        output_low(PIN_B5);            // RB5 LED OFF
+        pwm_off();                     // Turn off pwm for both outputs
+        output_a(0);                   // PORTA pins low
+        delay_ms(100);                 // Wait 100ms
+        pwm_on(PIN_A1);                // Turn PWM on at RA1
+        output_high(PIN_B6);
+        if(i > 99)
+          output_high(PIN_B7);}}
+    if(input(PIN_B4) == 0){            // If RB4 button pressed
+      pwm_off();                       // Turn off pwm for both outputs
+      output_a(0);                     // PORTA pins low
+      output_b(0);}                    // PORTB pins low
+    }
+}

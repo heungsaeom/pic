@@ -1,0 +1,47 @@
+/* PIC18F4550 microcontroller with ST7735R SPI TFT and 2 ADC channels
+   ST7735 TFT display driver for CCS PIC C compiler is required
+*/
+
+// TFT module connections
+#define TFT_CS  PIN_D1
+#define TFT_DC  PIN_D0
+#define TFT_SPI_HARDWARE
+// End TFT module connections
+
+#include <18F4550.h>
+#device ADC = 8
+#fuses NOMCLR HSPLL PLL2 CPUDIV1
+#use delay(clock = 48000000)
+#include <ST7735_TFT.c>
+#use fast_io(D)
+
+unsigned int8 i, j, k, pos_x0, pos_x, pos_y;
+void main(){
+  setup_adc_ports(AN0_TO_AN1);                        // Configure AN0 and AN1 as analog inputs
+  setup_adc(ADC_CLOCK_DIV_64);                        // Set ADC conversion time to 64Tosc
+  set_adc_channel(0);                                 // Select channel AN0
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  pos_x0 = read_adc();
+  pos_y = 0;
+  while(TRUE){
+    i = read_adc();
+    set_adc_channel(1);                               // Select channel AN1
+    pos_x = i / 2;
+    if(pos_x0 <= pos_x)
+      for(j = pos_x0; j < pos_x + 1; j++)
+        drawPixel(j, pos_y, ST7735_YELLOW);
+    else
+      for(j = pos_x0; (j + 1) > pos_x; j--)
+        drawPixel(j, pos_y, ST7735_YELLOW);
+    pos_x0 = pos_x;
+    k = read_adc();
+    set_adc_channel(0);                               // Select channel AN0
+    delay_ms(k);
+    pos_y++;
+    if(pos_y > _height){
+      fillScreen(ST7735_BLACK);
+      pos_y = 0;
+    }
+  }
+}

@@ -1,0 +1,22 @@
+// PIC16F877A RB change interrupt
+// https://simple-circuit.com/
+
+#include <16F877A.h>;
+#use delay(crystal=8000000)
+
+byte i;
+#INT_RB
+void rb_isr(void)
+{
+   i = input_b();
+   output_d(i >> 4);
+}
+void main()
+{
+   set_tris_b(0xF0);
+   clear_interrupt(INT_RB);        // Clear PORTB IOC flag bit
+   enable_interrupts(INT_RB);      // Enable PORTB IOC
+   enable_interrupts(GLOBAL);      // Enable global interrupts
+
+   while(TRUE) ; // Endless loop
+}

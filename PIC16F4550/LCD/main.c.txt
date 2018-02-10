@@ -1,0 +1,59 @@
+// Interfacing PIC18F4550 with LCD display CCS C code
+
+//LCD module connections
+#define LCD_RS_PIN PIN_D0
+#define LCD_RW_PIN PIN_D1
+#define LCD_ENABLE_PIN PIN_D2
+#define LCD_DATA4 PIN_D3
+#define LCD_DATA5 PIN_D4
+#define LCD_DATA6 PIN_D5
+#define LCD_DATA7 PIN_D6
+//End LCD module connections
+
+#include <18F4550.h>
+#fuses NOMCLR INTRC_IO
+#use delay(clock=8000000)
+#include <lcd.c>
+
+char i;
+void main(){
+  setup_oscillator(OSC_8MHZ);       // Setup internal oscillator @ 8MHz
+  lcd_init();                       // Initialize LCD module
+  lcd_gotoxy(2, 1);                 // Go to column 2 row 1
+  lcd_putc("PIC18F4550");
+  lcd_gotoxy(1, 2);                 // Go to column 1 row 2
+  lcd_putc("LCD example");
+  for(i = 0; i < 2; i++){           // Shift display right 2 times
+    delay_ms(200);
+    lcd_send_byte(0,0x1E);
+    }
+  delay_ms(5000);
+  for(i = 0; i < 14; i++){           // Shift display right 14 times
+    delay_ms(200);
+    lcd_send_byte(0,0x1E);
+    }
+  lcd_putc('f');                    // LCD clear
+  lcd_gotoxy(18, 1);                 // Go to column 18 row 1
+  lcd_putc("Hello world!");
+  lcd_gotoxy(17, 2);                 // Go to column 17 row 2
+  lcd_putc("Have a nice day");
+  for(i = 0; i < 15; i++){           // Shift display left 15 times
+    delay_ms(200);
+    lcd_send_byte(0,0x18);
+    }
+  delay_ms(5000);
+  lcd_putc('f');                    // LCD clear
+  lcd_gotoxy(3, 1);                  // Go to column 3 row 1
+  lcd_putc("Hello world!");
+  i = 0;
+  while(TRUE){
+    if(input(PIN_C0) == 0){
+      i++;
+      if(i > 100)
+        i = 0;
+      lcd_gotoxy(7, 2);              // Go to column 7 row 2
+      printf(lcd_putc,"%3u",i);      // Write i with 3 numbers max
+      delay_ms(200);
+      }
+    }
+}

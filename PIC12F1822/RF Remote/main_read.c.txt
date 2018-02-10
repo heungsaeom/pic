@@ -1,0 +1,67 @@
+// NEC protocol 433MHz RF remote control receiver using PIC12F1822 CCS C code
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock=32000000)
+#use fast_io(A)
+#define RF_Receiver PIN_A3
+
+unsigned int32 rf_code;
+short nec_remote_read(){
+  unsigned int16 count = 0;
+  unsigned int8 i;
+  // Check 9ms pulse (RF remote control sends logic high)
+  SET_TIMER1(0);
+  while(input(RF_Receiver) && (count < 9500))
+    count = GET_TIMER1();
+  if( (count > 9499) || (count < 8500))
+    return FALSE;
+  // Check 4.5ms space (RF remote control sends logic low)
+  SET_TIMER1(0);
+  count = 0;
+  while((!input(RF_Receiver)) && (count < 5000))
+    count = GET_TIMER1();
+  if( (count > 4999) || (count < 4000))
+    return FALSE;
+  // Read RF message (32 bits)
+  for(i = 0; i < 32; i++){
+    SET_TIMER1(0);
+    count = 0;
+    while(input(RF_Receiver) && (count < 650))
+      count = GET_TIMER1();
+    if( (count > 649) || (count < 500))
+      return FALSE;
+    count = 0;
+    SET_TIMER1(0);
+    while((!input(RF_Receiver)) && (count < 1800))
+      count = GET_TIMER1();
+    if( (count > 1799) || (count < 400))
+      return FALSE;
+    if( count > 1000)                                 // If space width > 1ms
+      bit_set(rf_code, (31 - i));                     // Write 1 to bit (31 - i)
+    else                                              // If space width < 1ms
+      bit_clear(rf_code, (31 - i));                   // Write 0 to bit (31 - i)
+  }
+  return TRUE;
+}
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);            // Set internal oscillator to 32MHz (8MHz and PLL)
+  output_a(0);
+  set_tris_a(8);
+  SETUP_TIMER_1(T1_INTERNAL | T1_DIV_BY_8);
+  while(TRUE){
+    while(!input(RF_Receiver));                       // Wait until RF_Receiver pin raises
+    if(nec_remote_read()){
+      if(rf_code == 0x40BF00FF)
+        output_toggle(PIN_A0);
+      if(rf_code == 0x40BF807F)
+        output_toggle(PIN_A1);
+      if(rf_code == 0x40BF40BF)
+        output_toggle(PIN_A2);
+      if(rf_code == 0x40BF20DF)
+        output_toggle(PIN_A4);
+      if(rf_code == 0x40BFA05F)
+        output_toggle(PIN_A5);
+      }
+  }
+}

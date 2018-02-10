@@ -1,0 +1,38 @@
+// Interfacing PIC16F84A with LCD display CCS C code
+
+//LCD module connections
+#define LCD_RS_PIN PIN_B0
+#define LCD_RW_PIN PIN_B1
+#define LCD_ENABLE_PIN PIN_B2
+#define LCD_DATA4 PIN_B3
+#define LCD_DATA5 PIN_B4
+#define LCD_DATA6 PIN_B5
+#define LCD_DATA7 PIN_B6
+//End LCD module connections
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(crystal=8000000)
+#include <lcd.c>
+
+unsigned int8 i = 0;
+void main() {
+  lcd_init();                 // Initialize LCD module
+  lcd_gotoxy(5, 1);           // Go to column 5 row 1
+  lcd_putc("PIC16F84A");
+  lcd_gotoxy(4, 2);           // Go to column 4 row 2
+  lcd_putc("LCD example");
+  delay_ms(5000);
+  lcd_putc('f');             // LCD clear
+  lcd_gotoxy(3, 1);           // Go to column 3 row 1
+  lcd_putc("Hello world!");
+
+  while(TRUE) {
+    lcd_gotoxy(7, 2);
+    printf(lcd_putc,"%3u",i);   // Write i with 3 numbers max
+    i++;                        // Increment i by 1
+    if(i > 100)
+      i = 1;
+    delay_ms(200);
+   }
+}

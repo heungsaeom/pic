@@ -1,0 +1,46 @@
+// Display BMP images from SD card on ST7735 1.8" (128x160) TFT screen.
+// ST7735 TFT driver, MCC/SD card driver and Fat16 library for CCS C compiler
+//   must be installed!
+
+// TFT module connections
+#define   TFT_CS  PIN_D1
+#define   TFT_DC  PIN_D0
+#define   TFT_SPI_HARDWARE                       // Hardware SPI module is used for the TFT
+// End TFT module connections
+#define   DRAW_BMP_FROM_MMCSD_CARD               // Enable BMP draw from SD card
+#define   pixel_buffer  500                      // Set pixel buffer to 500
+
+// SD Card module connections
+#define   SDCARD_SPI_HW                          // Hardware SPI module is used for the SD card
+#define   SDCARD_PIN_SELECT  PIN_D2
+// End SD card module connections
+
+#include <18F4550.h>
+#fuses NOMCLR HSPLL PLL2 CPUDIV1
+#use delay(clock = 48MHz)
+#use fast_io(D)
+#include <sdcard.c>                              // SD card diver source code
+#include <fat16.c>                               // FAT16 library source code
+#include <ST7735_TFT.c>                          // ST7735 TFT driver source code
+
+const int8 *txt = "FAT16 Initialization Error!";
+int8 i = 'A', bmp[6];
+void main(){
+  set_tris_d(0);                                 // Configure PORTD pins as outputs
+  delay_ms(2000);
+  TFT_BlackTab_Initialize();
+  fillScreen(ST7735_BLACK);
+  if(fat16_init() == 0){
+    strcpy (bmp, "A.bmp");
+    while(TRUE){
+      bmpDraw(0, 0, bmp);
+      while(input(PIN_B2));
+      i++;
+      if(i > 90)
+        i = 'A';
+      bmp[0] = i;
+    }
+  }
+  else
+    drawtext(0, 10, txt, ST7735_YELLOW, ST7735_BLACK, 2);
+}

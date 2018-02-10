@@ -1,0 +1,49 @@
+// Interfacing PIC12F1822 with LCD display CCS PIC C code
+// 3-Wire LCD driver must be added
+
+//LCD module connections
+#define LCD_DATA_PIN PIN_A0
+#define LCD_CLOCK_PIN PIN_A1
+#define LCD_EN_PIN PIN_A2
+//End LCD module connections
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock=32000000)
+#include <3WireLCD.c>
+
+unsigned int8 i;
+char message[] = "PIC12F1822 LCD Example ";
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);    // Set internal oscillator to 32MHz
+  lcd_initialize();                           // Initialize LCD module
+  lcd_cmd(LCD_CLEAR);                         // Clear the LCD
+  lcd_goto(3, 1);                             // Go to column 3 line 1
+  lcd_out("Hello world!");
+  // Scroll 2nd line only
+  for(i = 17; i > 0; i--){
+    lcd_goto(i, 2);
+    printf(lcd_out, message);
+    delay_ms(200);
+  }
+  for(i = 0; i < 23; i++){
+    lcd_goto(1, 2);
+    printf(lcd_out, message + i);
+    delay_ms(200);
+  }
+  // End scrolling 2nd line
+  delay_ms(2000);
+  lcd_goto(4, 2);                             // Go to column 4 line 2
+  lcd_out("3-Wire LCD");
+  delay_ms(2000);
+  lcd_goto(4, 2);                             // Go to column 4 line 2
+  lcd_out("          ");                      // Clear 2nd line
+  i = 0;
+  while(TRUE){
+    for(i = 0; i < 200; i++){
+      lcd_goto(7, 2);                          // Go to column 7 row 4
+      printf(lcd_out,"%3u",i);                 // Write i with 3 numbers max
+      delay_ms(500);
+    }
+  }
+}                                               // End of program

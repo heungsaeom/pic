@@ -1,0 +1,20 @@
+// PIC16F84A LED blink example
+// https://simple-circuit.com/
+// electronnote@gmail.com
+
+#include <16F84A.h>;
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(crystal=8000000)
+
+void main(){
+   while(TRUE){                  // Endless loop
+     if(input(PIN_B0) == 0){     // If RB0 button is pressed
+       output_toggle(PIN_A0);    // Toggle RA0 LED status
+       delay_ms(500);            // Wait 500 ms
+     }
+     if(input(PIN_B1) == 0){     // If RB1 button is pressed
+       output_toggle(PIN_A1);    // Toggle RA1 LED status
+       delay_ms(500);            // Wait 500 ms
+     }
+   }
+}

@@ -1,0 +1,36 @@
+// RTOS example for PIC16F887 with CCS PIC C compiler
+// PIC16F887 internal oscillator used @ 4MHz
+// Timer0 is used for the RTOS
+
+#include <16F887.h>
+#fuses NOMCLR, NOBROWNOUT, NOLVP, INTRC_IO
+#use delay(clock = 4MHz)
+#use fast_io(B)
+#use rtos(timer = 0, minor_cycle = 50ms)
+
+#task(rate = 250ms, max = 50ms)                  // 1st RTOS task (executed every 250ms)
+void led1(){
+  output_toggle(PIN_B0);
+}
+#task(rate = 500ms, max = 50ms)                  // 2nd RTOS task (executed every 500ms)
+void led2(){
+  output_toggle(PIN_B1);
+}
+#task(rate = 750ms, max = 50ms)                  // 3rd RTOS task (executed every 750ms)
+void led3(){
+  output_toggle(PIN_B2);
+}
+#task(rate = 1000ms, max = 50ms)                 // 4th RTOS task (executed every 1000ms)
+void led4(){
+  output_toggle(PIN_B3);
+}
+#task(rate = 1250ms, max = 50ms)                 // 5th RTOS task (executed every 1250ms)
+void led5(){
+  output_toggle(PIN_B4);
+}
+void main(){
+  setup_oscillator(OSC_4MHZ);                    // Set the internal oscillator to 8MHz
+  output_b(0);                                   // All PORTB register pins are zeros
+  set_tris_b(0);                                 // Configure PORTB pins as outputs
+  rtos_run();                                    // Start all the RTOS tasks
+}

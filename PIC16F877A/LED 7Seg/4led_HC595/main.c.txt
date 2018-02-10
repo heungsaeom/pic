@@ -1,0 +1,86 @@
+// 4-Digit 7-Segment display with 74HC595 interfacing with PIC16F877A CCS C code
+
+#define data_pin  PIN_B0
+#define clock_pin PIN_B1
+#define latch_pin PIN_B2
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP
+#use delay(clock = 8000000)
+#use fast_io(B)
+#use fast_io(D)
+
+short s;                                   // Used to know buttons position
+unsigned int j, digit ;
+unsigned long i = 0;
+unsigned int seg(unsigned int num) {
+  switch (num) {
+    case 0 : return 0x80;
+    case 1 : return 0xF2;
+    case 2 : return 0x48;
+    case 3 : return 0x60;
+    case 4 : return 0x32;
+    case 5 : return 0x24;
+    case 6 : return 0x04;
+    case 7 : return 0xF0;
+    case 8 : return 0;
+    case 9 : return 0x20;
+    }
+}
+void write_data(unsigned int number){
+  for(j = 0x80; j > 0; j = j >> 1) {
+     if(number & j)
+       output_high(data_pin);
+     else
+       output_low(data_pin);
+     output_high(clock_pin);
+     output_low(clock_pin);
+   }
+     output_high(latch_pin);
+     output_low(latch_pin);
+}
+void main(){
+  port_b_pullups(TRUE);                  // Enable PORTB pull-ups
+  output_b(0);                           // PORTB initial state
+  set_tris_b(0x18);                      // Configure RB3 & RB4 pins as inputs
+  output_d(0);                           // PORTD initial state
+  set_tris_d(0);                         // Configure PORTD pins as inputs
+  while(TRUE){
+    if(input(PIN_B3) && input(PIN_B4))
+      s = 1;
+    if(s == 1) {
+      if(input(PIN_B3) == 0) {
+       s = 0;
+       i++;
+       if(i > 9999)
+         i = 0;
+      }
+      if(input(PIN_B4) == 0) {
+       s = 0;
+       if(i < 1)
+         i = 1;
+       i--;
+      }
+    }
+    digit = seg(i % 10);                 // Prepare to display ones
+    output_d(0x0F);                      // Turn off all displays
+    write_data(digit);
+    output_d(0x07);                      // Turn on display for ones
+    delay_ms(1);
+    digit = seg((i / 10) % 10);          // Prepare to display tens
+    output_d(0x0F);                      // Turn off all displays
+    write_data(digit);
+    output_d(0x0B);                      // Turn on display for tens
+    delay_ms(1);
+    digit = seg((i / 100) % 10);         // Prepare to display hundreds
+    output_d(0x0F);                      // Turn off all displays
+    write_data(digit);
+    output_d(0x0D);                      // Turn on display for hundreds
+    delay_ms(1);
+    digit = seg((i / 1000) % 10);        // Prepare to display thousands
+    output_d(0x0F);                      // Turn off all displays
+    write_data(digit);
+    output_d(0x0E);                      // Turn on display for thousands
+    delay_ms(1);
+  }
+}

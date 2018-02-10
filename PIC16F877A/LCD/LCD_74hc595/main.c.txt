@@ -1,0 +1,31 @@
+// Interfacing PIC16F877A with 3-wire LCD CCS C code
+ 
+//LCD module connections
+#define LCD_DATA_PIN PIN_B0
+#define LCD_CLOCK_PIN PIN_B1
+#define LCD_EN_PIN PIN_B2
+//End LCD module connections
+ 
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP
+#use delay(clock = 8000000)
+#include <3WireLCD.c>
+ 
+unsigned int8 i;
+void main(){
+  lcd_initialize();                      // Initialize LCD module
+  lcd_cmd(LCD_CLEAR);                    // Clear the LCD
+  lcd_goto(3, 1);                        // Go to column 3 row 1
+  printf(lcd_out, "Hello world!");
+  lcd_goto(4, 2);                        // Go to column 4 row 2
+  printf(lcd_out, "3-Wire LCD");
+  lcd_goto(4, 3);                        // Go to column 4 row 3
+  printf(lcd_out, "PIC16F877A");
+  delay_ms(5000);
+  while(TRUE){
+    i++;
+    lcd_goto(7, 4);                    // Go to column 7 row 4
+    printf(lcd_out,"%3u",i);           // Write i with 3 numbers max
+    delay_ms(500);
+  }
+}

@@ -1,0 +1,53 @@
+/* Thermometer using PIC12F1822 microcontroller and LM335 sensor C code.
+   The temperature results (kelvin and degree Celsius) are displayed on
+   1602 LCD screen with the help of a shift register (74HC595, 74HC164 ....).
+   Serial LCD driver for CCS C must be added to the project.
+*/
+
+// Serial LCD module connections
+#define LCD_DATA_PIN  PIN_A5
+#define LCD_CLOCK_PIN PIN_A4
+#define LCD_EN_PIN    PIN_A2
+// End serial LCD module connections
+
+#include <12F1822.h>
+#device ADC = 10
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock=32000000)
+#use fast_io(A)
+#include <3WireLCD.c>                            // 3-wire serial LCD driver source file
+
+char celsius_temp[] = "Temp =  00.0ßC";
+char kelvin_temp[]  =      "=  00.0 K";
+signed int16 Kelvin, Celsius;
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);       // Set internal oscillator to 8MHz with PLL enabled (32MHz)
+  lcd_initialize();                              // Initialize LCD module
+  lcd_cmd(LCD_CLEAR);                            // LCD Clear
+  setup_vref(VREF_ADC_4v096);                    // Configure FVR to supply ADC positive reference with 4.096V
+  setup_adc(ADC_CLOCK_INTERNAL);                 // ADC Module uses its internal oscillator
+  setup_adc_ports(sAN0 | VSS_FVR);               // Configure AN0 pin as analog - Voltage reference: VSS - FVR(4.096V)
+  set_adc_channel(0);                            // Select channel 0 (AN0)
+ while(TRUE){
+    delay_ms(1000);
+    Kelvin = (read_adc() + 1) * 0.4;             // Read analog voltage and convert it to Kelvin (0.4 = 100*4.096/1024)
+    Celsius = Kelvin - 273;                      // Convert Kelvin to degree Celsius
+    if(Celsius < 0){
+      Celsius = abs(Celsius);                    // Absolute value
+      celsius_temp[7] = '-';                     // Put minus '-' sign
+    }
+    else
+      celsius_temp[7]  = ' ';                    // Put space ' '
+    if (Celsius > 99)
+      celsius_temp[7]  = '1';                    // Put 1 (of hundred)
+    celsius_temp[8]  = (Celsius / 10) % 10  + 48;
+    celsius_temp[9]  =  Celsius % 10  + 48;
+    kelvin_temp[2]   = (Kelvin / 100) % 10 + 48;
+    kelvin_temp[3]   = (Kelvin / 10) % 10 + 48;
+    kelvin_temp[4]   =  Kelvin % 10 + 48;
+    lcd_goto(1, 1);                              // Go to column 1 row 1
+    printf(lcd_out, celsius_temp);               // Display Celsius_temp
+    lcd_goto(6, 2);                              // Go to column 6 row 2
+    printf(lcd_out, kelvin_temp);                // Display kelvin_temp
+  }
+}

@@ -1,0 +1,2 @@
+minute = (minute >> 4) * 10 + (minute & 0x0F);                                  // Convert BCD to decimal
+minute = ((minute / 10) << 4) + (minute % 10);                                    // Convert decimal to BCD

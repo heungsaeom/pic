@@ -1,0 +1,298 @@
+// PIC16F877A + 2004 LCD + DS1307 RTC + DHT11 Sensor CCS C code
+
+//LCD module connections
+#define LCD_RS_PIN PIN_D0
+#define LCD_RW_PIN PIN_D1
+#define LCD_ENABLE_PIN PIN_D2
+#define LCD_DATA4 PIN_D3
+#define LCD_DATA5 PIN_D4
+#define LCD_DATA6 PIN_D5
+#define LCD_DATA7 PIN_D6
+//End LCD module connections
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP                       
+#use delay(clock = 8000000)
+#include <lcd.c>
+#use fast_io(B)
+#use I2C(master, I2C1, FAST=100000)
+#define DHT11_PIN PIN_B2                // Connection pin between DHT11 and mcu
+
+short button_state, Time_out;
+char time[] = "TIME:      :  :  ";
+char calendar[] = "  /  /20  ";
+unsigned int8 second, second10, minute, minute10,
+               hour, hour10, date, date10, month, month10,
+               year, year10, day, i, j ;
+char message1[] = "Temperature: 00.0 C ";
+char message2[] = "Humidity   : 00.0 % ";
+unsigned int8 T_byte1, T_byte2, RH_byte1, RH_byte2, CheckSum, time_read ;
+void ds1307_display(){
+  second10  =  (second & 0x70) >> 4;
+  second = second & 0x0F;
+  minute10  =  (minute & 0x70) >> 4;
+  minute = minute & 0x0F;
+  hour10  =  (hour & 0x30) >> 4;
+  hour = hour & 0x0F;
+  date10  =  (date & 0x30) >> 4;
+  date = date & 0x0F;
+  month10  =  (month & 0x10) >> 4;
+  month = month & 0x0F;
+  year10  =  (year & 0xF0) >> 4;
+  year = year & 0x0F;
+  time[16]  = second  + 48;
+  time[15]  = second10  + 48;
+  time[13]  = minute  + 48;
+  time[12]  = minute10  + 48;
+  time[10]  = hour  + 48;
+  time[9]  = hour10  + 48;
+  calendar[9]  = year  + 48;
+  calendar[8]  = year10  + 48;
+  calendar[4]  = month + 48;
+  calendar[3]  = month10 + 48;
+  calendar[1]  = date + 48;
+  calendar[0]  = date10 + 48;
+  lcd_gotoxy(1, 1);                              // Go to column 1 row 1
+  printf(lcd_putc, time);                        // Display time
+  lcd_gotoxy(1, 2);                              // Go to column 1 row 2
+  switch(day){
+    case 1: lcd_putc("DATE:Sun"); break;
+    case 2: lcd_putc("DATE:Mon"); break;
+    case 3: lcd_putc("DATE:Tue"); break;
+    case 4: lcd_putc("DATE:Wed"); break;
+    case 5: lcd_putc("DATE:Thu"); break;
+    case 6: lcd_putc("DATE:Fri"); break;
+    case 7: lcd_putc("DATE:Sat"); break;}
+  lcd_gotoxy(10, 2);                              // Go to column 9 row 2
+  printf(lcd_putc, calendar);                    // Display calendar
+}
+void ds1307_write(unsigned int8 address, data_){
+  i2c_start();                                   // Start I2C
+  i2c_write(0xD0);                               // DS1307 address
+  i2c_write(address);                            // Send register address
+  i2c_write(data_);                        // Write data to the selected register
+  i2c_stop();                                    // Stop I2C
+}
+void ds1307_read(){
+   i2c_start();                                  // Start I2C
+   i2c_write(0xD0);                              // DS1307 address
+   i2c_write(0);                                 // Send register address
+   i2c_start();                                  // Restart I2C
+   i2c_write(0xD1);                              // Initialize data read
+   second =i2c_read(1);                          // Read seconds from register 0
+   minute =i2c_read(1);                          // Read minuts from register 1
+   hour = i2c_read(1);                           // Read hour from register 2
+   day = i2c_read(1);                            // Read day from register 3
+   date = i2c_read(1);                           // Read date from register 4
+   month = i2c_read(1);                          // Read month from register 5
+   year = i2c_read(0);                           // Read year from register 6
+   i2c_stop();                                   // Stop I2C
+}
+int8 edit(int8 parameter, int8 xx, int8 yy){
+  while(TRUE){
+    if(input(PIN_B0)) button_state = 0;
+    while(!input(PIN_B1)){
+      parameter++;
+      if(i == 1 && parameter > 23)
+        parameter = 0;
+      if(i == 2 && parameter > 59)
+        parameter = 0;
+      if(i == 3 && parameter > 31)
+        parameter = 1;
+      if(i == 4 && parameter > 12)
+        parameter = 1;
+      if(i == 5 && parameter > 99)
+        parameter = 0;
+      lcd_gotoxy(xx, yy);
+      printf(lcd_putc,"%02u", parameter);
+      delay_ms(200);}
+    lcd_gotoxy(xx, yy);
+    lcd_putc("  ");
+    j = 0;
+    while((input(PIN_B0) || button_state) && input(PIN_B1) && j < 5){
+      j++;
+     delay_ms(50);}
+    lcd_gotoxy(xx, yy);
+    printf(lcd_putc,"%02u", parameter);
+    j = 0;
+    while((input(PIN_B0) || button_state) && input(PIN_B1) && j < 5){
+      j++;
+      delay_ms(50);}
+    if(!input(PIN_B0) && !button_state){
+      button_state = 1; return parameter;}
+  } 
+}
+void start_signal(){
+  output_drive(DHT11_PIN);              // Configure connection pin as output
+  output_low(DHT11_PIN);                // Connection pin output low
+  delay_ms(25);
+  output_high(DHT11_PIN);               // Connection pin output high
+  delay_us(30);
+  output_float(DHT11_PIN);              // Configure connection pin as input
+}
+short check_response(){
+  delay_us(40);
+  if(!input(DHT11_PIN)){                // Read and test if connection pin is low
+    delay_us(80);
+    if(input(DHT11_PIN)){               // Read and test if connection pin is high
+      delay_us(50);
+      return 1;
+    }
+  }
+}
+unsigned int8 Read_Data(){
+  unsigned int8 i, k, _data = 0;     // k is used to count 1 bit reading duration
+  if(Time_out)
+    break;
+  for(i = 0; i < 8; i++){
+    k = 0;
+    while(!input(DHT11_PIN)){                          // Wait until pin goes high
+      k++;
+      if (k > 100) {Time_out = 1; break;}
+      delay_us(1);}
+    delay_us(30);
+    if(!input(DHT11_PIN))
+      bit_clear(_data, (7 - i));                       // Clear bit (7 - i)
+    else{
+      bit_set(_data, (7 - i));                         // Set bit (7 - i)
+      while(input(DHT11_PIN)){                         // Wait until pin goes low
+      k++;
+      if (k > 100) {Time_out = 1; break;}
+      delay_us(1);}
+    }
+  }
+  return _data;
+}
+void main(){
+  port_b_pullups(TRUE);                           // Enable PORTB pull-ups
+  output_b(0);
+  set_tris_b(3);                                  // Configure RB0 & RB1 as inputs
+  lcd_init();                                     // Initialize LCD module
+  lcd_putc('\f');                                 // LCD clear
+  while(TRUE){
+    Time_out = 0;
+    if(input(PIN_B0)) button_state = 0;
+    if(!input(PIN_B0) && (!button_state)){
+      button_state = 1;
+      // Convert BCD to decimal
+      minute = minute + minute10 * 10;
+      hour = hour + hour10 * 10;
+      date = date + date10 * 10;
+      month = month + month10 * 10;
+      year = year + year10 * 10;
+      // End conversion
+      i=1;
+      hour = edit(hour, 10, 1);
+      i=2;
+      minute = edit(minute, 13, 1);
+      while(TRUE){
+        if(input(PIN_B0)) 
+          button_state = 0;
+        while(!input(PIN_B1)){
+          day++;
+          if(day > 7)
+            day = 1;
+          lcd_gotoxy(6, 2);                        // Go to column 6 row 2
+          switch(day){
+            case 1: lcd_putc("Sun"); break;
+            case 2: lcd_putc("Mon"); break;
+            case 3: lcd_putc("Tue"); break;
+            case 4: lcd_putc("Wed"); break;
+            case 5: lcd_putc("Thu"); break;
+            case 6: lcd_putc("Fri"); break;
+            case 7: lcd_putc("Sat"); break;}
+          delay_ms(200);
+        }
+        lcd_gotoxy(6, 2);
+        lcd_putc("   ");
+        j = 0;
+        while((input(PIN_B0)||button_state) && input(PIN_B1) && j < 5){
+          j++;
+          delay_ms(50);}
+        lcd_gotoxy(6, 2);
+        switch(day){
+          case 1: lcd_putc("Sun"); break;
+          case 2: lcd_putc("Mon"); break;
+          case 3: lcd_putc("Tue"); break;
+          case 4: lcd_putc("Wed"); break;
+          case 5: lcd_putc("Thu"); break;
+          case 6: lcd_putc("Fri"); break;
+          case 7: lcd_putc("Sat"); break;}
+        if(!input(PIN_B0) && (!button_state)){
+          button_state = 1;
+          break;}
+        j = 0;
+        while((input(PIN_B0)||button_state) && input(PIN_B1) && j < 5){
+          j++;
+          delay_ms(50);}
+      }
+      i=3;
+      date = edit(date, 10, 2); 
+      i=4;
+      month = edit(month, 13, 2);
+      i=5;
+      year = edit(year, 18, 2);
+      // Convert decimal to BCD
+      minute = ((minute/10) << 4) + (minute % 10);
+      hour = ((hour/10) << 4) + (hour % 10);
+      date = ((date/10) << 4) + (date % 10);
+      month = ((month/10) << 4) + (month % 10);
+      year = ((year/10) << 4) + (year % 10);
+      // End conversion
+      ds1307_write(1, minute);
+      ds1307_write(2, hour);
+      ds1307_write(3, day);
+      ds1307_write(4, date);
+      ds1307_write(5, month);
+      ds1307_write(6, year);
+      ds1307_write(0, 0);
+    }
+    ds1307_read();                              // Read data from DS1307 RTCC
+    ds1307_display();                           // Diaplay time and calendar
+    if(((second10 * 10+second)>time_read)||((second10 * 10+second)==0 && time_read)){
+      time_read = second10 * 10 + second;
+      Start_signal();
+      if(check_response()){                     // If there is response from sensor
+        RH_byte1 = Read_Data();                 // read RH byte1
+        RH_byte2 = Read_Data();                 // read RH byte2
+        T_byte1 = Read_Data();                  // read T byte1
+        T_byte2 = Read_Data();                  // read T byte2
+        Checksum = Read_Data();                 // read checksum
+        if(Time_out){                           // If reading takes long time
+          lcd_gotoxy(21, 1);                    // Go to column 1 row 3
+          lcd_putc("     Time Out!      ");
+          lcd_gotoxy(21, 2);                    // Go to column 1 row 4
+          lcd_putc("                    ");     // Clear 4th row
+        }
+        else{
+          if(CheckSum == ((RH_Byte1 + RH_Byte2 + T_Byte1 + T_Byte2) & 0xFF)){
+            message1[13]  = T_Byte1 / 10  + 48;
+            message1[14]  = T_Byte1 % 10  + 48;
+            message1[16]  = T_Byte2 / 10  + 48;
+            message2[13] = RH_Byte1 / 10 + 48;
+            message2[14] = RH_Byte1 % 10 + 48;
+            message2[16] = RH_Byte2 / 10 + 48;
+            message1[17] = 223;                   // Degree symbol 
+            lcd_gotoxy(21, 1);                    // Go to column 1 row 3
+            printf(lcd_putc, message1);           // Display message1
+            lcd_gotoxy(21, 2);                    // Go to column 1 row 4
+            printf(lcd_putc, message2);           // Display message2
+          }
+          else{
+            lcd_gotoxy(21, 1);                    // Go to column 1 row 3
+            lcd_putc("  Checksum Error!   ");
+            lcd_gotoxy(21, 2);                    // Go to column 1 row 4
+            lcd_putc("                    ");     // Clear 4th row
+          }
+        }
+      }
+      else {
+        lcd_gotoxy(21, 1);           // Go to column 1 row 3
+        lcd_putc("    No response     ");
+        lcd_gotoxy(21, 2);           // Go to column 1 row 4
+        lcd_putc("  from the sensor   ");
+      }
+    }  
+    delay_ms(50);
+  }
+}

@@ -1,0 +1,37 @@
+/* Interfacing PIC12F1822 with LM35 temperature sensor C code.
+   The temperature result is displayed on 1602 LCD screen with
+   the help of a shift register (74HC595, 74HC164 ....).
+   Serial LCD driver for CCS C must be added to the project.
+*/
+
+// Serial LCD module connections
+#define LCD_DATA_PIN  PIN_A5
+#define LCD_CLOCK_PIN PIN_A4
+#define LCD_EN_PIN    PIN_A2
+// End serial LCD module connections
+
+#include <12F1822.h>
+#device ADC = 10
+#fuses NOMCLR INTRC_IO PLL_SW
+#use delay(clock=32000000)
+#use fast_io(A)
+#include <3WireLCD.c>                            // 3-wire serial LCD driver source file
+
+float temp;
+void main() {
+  setup_oscillator(OSC_8MHZ | OSC_PLL_ON);       // Set internal oscillator to 8MHz with PLL enabled (32MHz)
+  lcd_initialize();                              // Initialize LCD module
+  lcd_cmd(LCD_CLEAR);                            // LCD Clear
+  setup_vref(VREF_ADC_1v024);                    // Configure FVR to supply ADC positive reference with 1.024V
+  setup_adc(ADC_CLOCK_INTERNAL);                 // ADC Module uses its internal oscillator
+  setup_adc_ports(sAN0 | VSS_FVR);               // Configure AN0 pin as analog - Voltage reference: VSS - FVR(1.024V)
+  set_adc_channel(0);                            // Select channel 0 (AN0)
+  lcd_goto(3, 1);                                // Go to column 3 row 1
+  printf(lcd_out, "Temperature:");
+ while(TRUE){
+    delay_ms(1000);
+    temp = read_adc() * 0.1;                     // Read analog voltage and convert it to Kelvin (0.1 = 100*1.024/1024)
+    lcd_goto(6, 2);                              // Go to column 6 row 2
+    printf(lcd_out, "%4.1fﬂC", temp);            // Display LM35 temperature result (float format)
+  }
+}

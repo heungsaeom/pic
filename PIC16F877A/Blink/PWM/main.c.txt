@@ -1,0 +1,28 @@
+// PIC16F877A PWM + ADC example with CCS C compiler
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP
+#device ADC=8                           // Set ADC resolution to 8-bit
+#use delay(clock=8000000)
+
+unsigned int8 i, j;
+void main(){
+  setup_adc(ADC_CLOCK_DIV_32);           // Set ADC conversion time to 32Tosc
+  setup_adc_ports(AN0_AN1_AN3);          // Configure AN0,AN1 and AN3 as analog
+  setup_ccp1(CCP_PWM);                   // Configure CCP1 as a PWM
+  setup_ccp2(CCP_PWM);                   // Configure CCP2 as a PWM
+  delay_ms(100);                         // Wait 100ms
+  setup_timer_2(T2_DIV_BY_16, 255, 1);   // Set PWM frequency to 488Hz
+  while(TRUE){
+    set_adc_channel(0);                  // Select channel AN0
+    delay_ms(1);                         // Wait 1ms
+    i = read_adc();                      // Read from AN0 and store in i
+    delay_ms(1);                         // Wait 1ms
+    set_adc_channel(1);                  // Select channel AN1
+    delay_ms(1);                         // Wait 1ms
+    j = read_adc();                      // Read from AN1 and store in j
+    set_pwm1_duty(i);
+    set_pwm2_duty(j);
+    delay_ms(1);                         // Wait 1ms
+   }
+}

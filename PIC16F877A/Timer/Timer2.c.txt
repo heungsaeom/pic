@@ -1,0 +1,29 @@
+// PIC16F877A Timer2 interrupt
+// Timer2 is used to interrupt every 49.93ms
+https://simple-circuit.com/
+
+#include <16F877A.h>
+#use delay(crystal=4000000)
+
+byte i;
+#INT_TIMER2
+void timer2_isr(void)
+{
+   clear_interrupt(INT_TIMER2);
+   i++;
+   if(i > 9)
+   {
+   i = 0;
+   output_toggle(PIN_B0);
+   }
+}
+void main()
+{
+   setup_timer_2 (T2_DIV_BY_16, 0xF0, 13 );  // Timer2 prescaler 16, Preload value 0xF0 and postoscaler 13
+   clear_interrupt(INT_TIMER2);              // Clear Timer2 interrupt flag bit
+   enable_interrupts(INT_TIMER2);            // Enable Timer2 interrupt
+   enable_interrupts(GLOBAL);                // Enable global interrupts
+   output_low(PIN_B0);
+
+   while(TRUE) ;                             // Endless loop
+}

@@ -1,0 +1,26 @@
+// PIC16F877A Timer1 interrupt
+// Timer1 is used to interrupt every 500ms
+// https://simple-circuit.com/
+
+#include <16F877A.h>
+#use delay(crystal=4000000)
+
+#INT_TIMER1
+void timer1_isr(void)
+{
+   clear_interrupt(INT_TIMER1);
+   set_timer1(3036);
+   output_toggle(PIN_B0);
+
+}
+void main()
+{
+   setup_timer_1 ( T1_INTERNAL | T1_DIV_BY_8 ); // Internal clock and prescaler 8
+   set_timer1(3036);                            // Preload value
+   clear_interrupt(INT_TIMER1);                 // Clear Timer1 interrupt flag bit
+   enable_interrupts(INT_TIMER1);               // Enable Timer1 interrupt
+   enable_interrupts(GLOBAL);                   // Enable global interrupts
+   output_low(PIN_B0);
+
+   while(TRUE) ; // Endless loop
+}

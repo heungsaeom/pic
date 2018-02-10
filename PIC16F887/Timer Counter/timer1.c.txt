@@ -1,0 +1,24 @@
+/* PIC16F887 Microcontroller Timer1 module interrupt example CCS C code
+   Internal oscillator used @ 4MHz
+   LED ON time = OFF time = 500 ms
+*/
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP INTRC_IO
+#use delay(clock = 4MHz)
+
+#INT_TIMER1
+void Timer1_isr(void){
+  output_toggle(PIN_A0);
+  set_timer1(3036);                              // Timer1 preload value
+  clear_interrupt(INT_TIMER1);                   // Clear Timer1 overflow bit
+}
+void main(){
+  setup_oscillator(OSC_4MHZ);                    // Set the internal oscillator to 4MHz
+  clear_interrupt(INT_TIMER1);                   // Clear Timer1 overflow bit
+  enable_interrupts(INT_TIMER1);                 // Enable Timer1 interrupt
+  enable_interrupts(GLOBAL);                     // Enable global interrupts
+  setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);      // Timer1 configuration: internal clock source + 8 prescaler
+  set_timer1(3036);                              // Timer1 preload value
+  while(TRUE);                                   // Endless loop
+}

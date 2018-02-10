@@ -1,0 +1,69 @@
+// Interfacing  PIC12F1822 with HC-SR04 ultrasonic sensor CCS C code
+// 3-Wire LCD driver must be added
+
+//LCD module connections
+#define LCD_DATA_PIN  PIN_A0
+#define LCD_CLOCK_PIN PIN_A1
+#define LCD_EN_PIN    PIN_A2
+//End LCD module connections
+
+#include <12F1822.h>
+#fuses NOMCLR INTRC_IO
+#use delay(clock = 8000000)
+#include <3WireLCD.c>
+#use fast_io(A)
+
+unsigned int16 i, distance;
+int1 wait_sensor(){
+  i = 0;
+  set_timer1(0);                                      // Reset Timer1
+  while(!input(PIN_A5) && (i < 1000))
+    i = get_timer1();                                 // Read Timer1 and store its value in i
+  if(i > 990)
+    return 0;
+  else
+    return 1;
+}
+unsigned int16 get_distance(){
+  i = 0;
+  set_timer1(0);
+  while(input(PIN_A5) && (i < 25000))
+    i = get_timer1();
+  return i;
+}
+void main() {
+  setup_oscillator(OSC_8MHZ);                         // Set internal oscillator to 8MHz
+  setup_adc_ports(NO_ANALOGS);                        // Configure all pins as digital
+  set_tris_a(0x20);                                   // Configure RA5 pin as input
+  lcd_initialize();                                   // Initialize LCD module
+  lcd_cmd(LCD_CLEAR);                                 // LCD Clear
+  lcd_goto(4, 1);                                     // Go to column 4 row 1
+  lcd_out("Distance:");
+  SETUP_TIMER_1(T1_INTERNAL | T1_DIV_BY_2);           // Configure Timer 1 to increment by 1 every 1 us
+  while(TRUE){
+    // Send 10us pulse to HC-SR04 Trigger pin
+    output_high(PIN_A4);
+    delay_us(10);
+    output_low(PIN_A4);
+    // Read pulse comes from HC-SR04 Echo pin
+    if(wait_sensor()) {
+      distance = get_distance();
+      if(distance > 24990) {
+        lcd_goto(3, 2);                               // Go to column 3 row 2
+        lcd_out("Out Of Range");
+      }
+      else {
+        distance = i/58;                              // Calculate the distance
+        lcd_goto(3, 2);                               // Go to column 3 row 2
+        lcd_out("       cm   ");
+        lcd_goto(6, 2);                               // Go to column 6 row 2
+        printf(lcd_out,"%3Lu",distance);
+      }
+    }
+    else {
+      lcd_goto(3, 2);                                 // Go to column 3 row 2
+      lcd_out("  Time Out  ");
+    }
+  delay_ms(100);
+  }
+}

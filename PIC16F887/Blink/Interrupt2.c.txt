@@ -1,0 +1,21 @@
+/* PIC16F887 Microcontroller PORTB interrupt-on-change example CCS C code
+   Internal oscillator used @ 8MHz
+*/
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP INTRC_IO
+#use delay(clock = 8MHz)
+
+#INT_RB
+void ext_isr(void){
+  clear_interrupt(INT_RB);                      // Clear PORTB IOC flag bit
+  output_d(input_b());
+}
+void main(){
+  setup_oscillator(OSC_8MHZ);                    // Set the internal oscillator to 8MHz
+  port_b_pullups(0xFF);                          // Enable all PORTB weak pull-ups
+  clear_interrupt(INT_RB);                       // Clear PORTB IOC flag bit
+  enable_interrupts(INT_RB);                     // Enable all PORTB IOC pins
+  enable_interrupts(GLOBAL);                     // Enable global interrupts
+  while(TRUE);                                   // Endless loop
+}

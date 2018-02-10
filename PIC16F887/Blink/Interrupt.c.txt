@@ -1,0 +1,21 @@
+/* PIC16F887 Microcontroller external interrupt example CCS C code
+   Internal oscillator used @ 8MHz
+*/
+
+#include <16F887.h>
+#fuses NOMCLR NOBROWNOUT NOLVP INTRC_IO
+#use delay(clock = 8MHz)
+
+#INT_EXT
+void ext_isr(void){
+  clear_interrupt(INT_EXT);                      // Clear external interrupt flag bit
+  output_toggle(PIN_D0);
+}
+void main(){
+  setup_oscillator(OSC_8MHZ);                    // Set the internal oscillator to 8MHz
+  output_low(PIN_D0);
+  clear_interrupt(INT_EXT);                      // Clear external interrupt flag bit
+  enable_interrupts(INT_EXT_H2L);                // Enable external interrupt
+  enable_interrupts(GLOBAL);                     // Enable global interrupts
+  while(TRUE);                                   // Endless loop
+}

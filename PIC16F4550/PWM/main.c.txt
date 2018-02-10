@@ -1,0 +1,29 @@
+// PIC18F4550 ADC + PWM CCS C code (10-bit PWM resolution)
+
+#include <18F4550.h>
+#device ADC = 10
+#fuses NOMCLR INTRC_IO
+#use delay(clock = 8000000)
+
+unsigned int16 i, j;
+void main(){
+  setup_oscillator(OSC_8MHZ);            // Set internal oscillator to 8MHz
+  setup_adc(ADC_CLOCK_DIV_8);            // Set ADC conversion time to 8Tosc
+  setup_adc_ports(AN0_TO_AN1);           // Configure AN0 and AN1 as analog inputs
+  setup_ccp1(CCP_PWM);                   // Configure CCP1 as a PWM
+  setup_ccp2(CCP_PWM);                   // Configure CCP2 as a PWM
+  setup_timer_2(T2_DIV_BY_16, 250, 1);   // Set PWM frequency to 500Hz
+  delay_ms(100);                         // Wait 100ms
+  while(TRUE){
+    set_adc_channel(0);                  // Select channel AN0
+    delay_ms(1);                         // Wait 1ms
+    i = read_adc();                      // Read from AN0 and store in i
+    delay_ms(1);                         // Wait 1ms
+    set_adc_channel(1);                  // Select channel AN1
+    delay_ms(1);                         // Wait 1ms
+    j = read_adc();                      // Read from AN1 and store in j
+    set_pwm1_duty(i);                    // Set pwm1 duty cycle to i
+    set_pwm2_duty(j);                    // Set pwm2 duty cycle to j
+    delay_ms(1);                         // Wait 1ms
+   }
+}

@@ -1,0 +1,101 @@
+// Interfacing PIC18F4550 with 7-segment display
+// Common anode 7-segment display used
+
+#include <18F4550.h>
+#fuses NOMCLR INTRC_IO
+#use delay(clock=8000000)
+
+short s;                       // Used to know buttons position
+unsigned int j, digit, digit1, digit10, digit100,digit1000;
+unsigned long i = 0;
+unsigned int seg(unsigned int num) {
+  switch (num) {
+    case 0 : return 0xC0;
+    case 1 : return 0xF9;
+    case 2 : return 0xA4;
+    case 3 : return 0xB0;
+    case 4 : return 0x99;
+    case 5 : return 0x92;
+    case 6 : return 0x82;
+    case 7 : return 0xF8;
+    case 8 : return 0x80;
+    case 9 : return 0x90;
+    }
+}
+void main(){
+  setup_oscillator(OSC_8MHZ);       // Setup internal oscillator @ 8MHz
+  while(TRUE){
+    if(input(PIN_D4) && input(PIN_D5))
+      s = 1;
+    if(s == 1) {
+      if(input(PIN_D4) == 0) {
+       s = 0;
+       i++;
+       if(i > 9999)
+         i = 0;
+      }
+      if(input(PIN_D5) == 0) {
+       s = 0;
+       if(i < 1)
+         i = 1;
+       i--;
+      }
+    }
+    digit = i % 10;
+    digit1 = seg(digit);
+    output_d(0x0F);              // Turn off all displays
+    for(j = 0x40; j > 0; j = j >> 1) {
+     if(digit1 & j)
+       output_high(PIN_B0);
+     else
+       output_low(PIN_B0);
+     delay_us(10);
+     output_high(PIN_B1);
+     delay_us(10);
+     output_low(PIN_B1);}
+    output_d(0x07);              // Turn on display for ones
+    delay_ms(1);
+    digit = (i / 10) % 10;
+    digit10 = seg(digit);
+    output_d(0x0F);              // Turn off all displays
+    for(j = 0x40; j > 0; j = j >> 1) {
+     if(digit10 & j)
+       output_high(PIN_B0);
+     else
+       output_low(PIN_B0);
+     delay_us(10);
+     output_high(PIN_B1);
+     delay_us(10);
+     output_low(PIN_B1);}
+    output_d(0x0B);              // Turn on display for tens
+    delay_ms(1);
+    digit = (i / 100) % 10;
+    digit100 = seg(digit);
+    output_d(0x0F);              // Turn off all displays
+    for(j = 0x40; j > 0; j = j >> 1) {
+     if(digit100 & j)
+       output_high(PIN_B0);
+     else
+       output_low(PIN_B0);
+     delay_us(10);
+     output_high(PIN_B1);
+     delay_us(10);
+     output_low(PIN_B1);}
+    output_d(0x0D);              // Turn on display for hundreds
+    delay_ms(1);
+    digit = (i / 1000) % 10;
+    digit1000 = seg(digit);
+    output_d(0x0F);              // Turn off all displays
+    for(j = 0x40; j > 0; j = j >> 1) {
+     if(digit1000 & j)
+       output_high(PIN_B0);
+     else
+       output_low(PIN_B0);
+     delay_us(10);
+     output_high(PIN_B1);
+     delay_us(10);
+     output_low(PIN_B1);}
+    output_d(0x0E);              // Turn on display for thousands
+    delay_ms(1);
+    }
+}

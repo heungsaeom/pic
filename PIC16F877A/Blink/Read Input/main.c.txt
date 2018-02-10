@@ -1,0 +1,23 @@
+// PIC16F877A buttons read
+// https://simple-circuit.com/
+
+#include <16F877A.h>
+#use delay(crystal=8000000)
+
+void main()
+{
+   output_b(0);
+   while(TRUE)
+   {
+    if(input(PIN_D0) == 0)
+    {
+      output_toggle(PIN_B0);
+      delay_ms(500);
+    }
+    if(input(PIN_D1) == 0)
+    {
+      output_toggle(PIN_B1);
+      delay_ms(500);
+    }
+   }
+}

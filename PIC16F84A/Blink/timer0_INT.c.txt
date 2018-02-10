@@ -1,0 +1,36 @@
+// PIC16F84A timer0 interrupt example
+// Timer0 is interrupted every 49.92ms (approximately 50ms)
+// Pin RA0 toggles its status every 10 * 49.92ms (approximately 500ms)
+// https://simple-circuit.com/
+// electronnote@gmail.com
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(crystal=4000000)
+
+byte i ;
+#INT_TIMER0
+void timer0_isr(void)
+{
+  clear_interrupt(INT_TIMER0);    // Clear timer0 interrupt flag bit
+  set_timer0(61);
+  i++;
+  if(i > 9)
+  {
+    i = 0;
+    output_toggle(PIN_A0);
+  }
+}
+
+void main()
+{
+  // Setup timer0 with internal clock and 256 prescaler
+  setup_timer_0(RTCC_INTERNAL|RTCC_DIV_256);
+  set_timer0(61);                // Timer0 preload value
+  clear_interrupt(INT_TIMER0);   // Clear timer0 interrupt flag bit
+  enable_interrupts(INT_TIMER0); // Enable timer0 interrupt
+  enable_interrupts(GLOBAL);     // Enable all unmasked interrupt
+  output_low(PIN_A0);
+
+  while(TRUE) ;              // Endless loop
+}

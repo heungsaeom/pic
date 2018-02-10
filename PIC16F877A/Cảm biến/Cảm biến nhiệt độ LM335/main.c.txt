@@ -1,0 +1,53 @@
+/* Interfacing PIC16F877A with LM335 analog temperature sensor CCS C code.
+   Read LM335 datasheet to understand the code!
+*/
+
+//LCD module connections
+#define LCD_RS_PIN      PIN_D0
+#define LCD_RW_PIN      PIN_D1
+#define LCD_ENABLE_PIN  PIN_D2
+#define LCD_DATA4       PIN_D3
+#define LCD_DATA5       PIN_D4
+#define LCD_DATA6       PIN_D5
+#define LCD_DATA7       PIN_D6
+//End LCD module connections
+
+#include <16F877A.h>
+#fuses HS,NOWDT,NOPROTECT,NOLVP
+#device ADC=10
+#use delay(clock = 8MHz)
+#include <lcd.c>
+
+char message1[] = "Temp =  00.0 C";
+char message2[] =      "=  00.0 K";
+signed int16 Kelvin, Celsius;
+void main(){
+  setup_adc(ADC_CLOCK_INTERNAL);                 // ADC Module uses its internal oscillator
+  setup_adc_ports(AN0);                          // Configure AN0 pin as analog
+  set_adc_channel(0);                            // Select channel 0 (AN0)
+  lcd_init();                                    // Initialize LCD module
+  lcd_putc('\f');                                // Clear LCD
+  while(TRUE){
+    delay_ms(1000);
+    Kelvin = read_adc() * 0.489;                 // Read analog voltage and convert it to Kelvin (0.489 = 500/1023)
+    Celsius = Kelvin - 273;                      // Convert Kelvin to degree Celsius
+    if(Celsius < 0){
+      Celsius = abs(Celsius);                    // Absolute value
+      message1[7] = '-';                         // Put minus '-' sign
+    }
+    else
+      message1[7]  = ' ';                        // Put space ' '
+    if (Celsius > 99)
+      message1[7]  = 1 + 48;                     // Put 1 (of hundred)
+    message1[8]  = (Celsius / 10) % 10  + 48;
+    message1[9]  =  Celsius % 10  + 48;
+    message1[12] = 223;                          // Degree symbol
+    message2[2]  = (Kelvin / 100) % 10 + 48;
+    message2[3]  = (Kelvin / 10) % 10 + 48;
+    message2[4] = Kelvin % 10 + 48;
+    lcd_gotoxy(1, 1);                            // Go to column 1 row 1
+    printf(lcd_putc, message1);                  // Display message1
+    lcd_gotoxy(6, 2);                            // Go to column 6 row 2
+    printf(lcd_putc, message2);                  // Display message2
+  }
+}

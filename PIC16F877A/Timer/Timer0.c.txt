@@ -1,0 +1,31 @@
+// PIC16F877A Timer0 interrupt
+// Timer0 is interrupted every 49.92ms (approximately 50ms)
+https://simple-circuit.com/
+
+#include <16F877A.h>
+#use delay(crystal=4000000)
+
+byte i;
+#INT_TIMER0
+void timer0_isr(void)
+{
+   clear_interrupt(INT_TIMER0);
+   set_timer0(61);
+   i++;
+   if(i > 9)
+   {
+      i = 0;
+      output_toggle(PIN_B0);
+   }
+}
+void main()
+{
+   setup_timer_0(RTCC_INTERNAL|RTCC_DIV_256);   // Configure Timer0 module with internal oscillator and 256 prescaler
+   set_timer0(61);                              // Timer0 preload value = 61
+   clear_interrupt(INT_TIMER0);                 // Clear Timer0 interrupt flag bit
+   enable_interrupts(INT_TIMER0);               // Enable Timer0 interrupt
+   enable_interrupts(GLOBAL);                   // Enable global interrupts
+   output_low(PIN_B0);
+
+   while(TRUE) ;                                // Endless loop
+}

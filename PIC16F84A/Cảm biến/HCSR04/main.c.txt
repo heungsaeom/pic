@@ -1,0 +1,82 @@
+// Interfacing  PIC16F84A with HC-SR04 ultrasonic sensor CCS C code
+
+//LCD module connections
+#define LCD_RS_PIN PIN_B0
+#define LCD_RW_PIN PIN_B1
+#define LCD_ENABLE_PIN PIN_B2
+#define LCD_DATA4 PIN_B3
+#define LCD_DATA5 PIN_B4
+#define LCD_DATA6 PIN_B5
+#define LCD_DATA7 PIN_B6
+//End LCD module connections
+
+#include <16F84A.h>
+#fuses HS,NOWDT,PUT,NOPROTECT
+#use delay(clock = 8000000)
+#include <lcd.c>
+#use fast_io(A)
+
+unsigned int8 count;
+unsigned int16 i, distance;
+#INT_TIMER0
+void timer0_isr(){
+  count++;
+  clear_interrupt(INT_TIMER0);
+}
+int1 wait_sensor(){
+  i = 0;
+  set_timer0(0);
+  count = 0;                             // Reset Timer0
+  while(!input(PIN_A1) && (i < 1000))
+    i = count * 256 + get_timer0();
+  if(i > 990)
+    return 0;
+  else
+    return 1;
+}
+unsigned int16 get_distance(){
+  i = 0;
+  set_timer0(0);
+  count = 0;
+  while(input(PIN_A1) && (i < 25000))
+    i = count * 256 + get_timer0();
+  return i;
+}
+void main(){
+  output_a(0);
+  set_tris_a(2);                                      // Configure RA1 as input
+  lcd_init();                                         // Initialize LCD module
+  lcd_putc('\f');                                     // LCD clear
+  clear_interrupt(INT_TIMER0);
+  enable_interrupts(GLOBAL);
+  enable_interrupts(INT_TIMER0);
+  setup_timer_0 (T0_INTERNAL | T0_DIV_2);             // Configure Timer0 module
+  lcd_gotoxy(4, 1);                                   // Go to column 4 row 1
+  lcd_putc("Distance:");
+  while(TRUE){
+    // Send 10us pulse to HC-SR04 Trigger pin
+    output_high(PIN_A0);
+    delay_us(10);
+    output_low(PIN_A0);
+    // Read pulse comes from HC-SR04 Echo pin
+    if(wait_sensor()) {
+      distance = get_distance();
+      if(distance > 24990) {
+        lcd_gotoxy(3, 2);                             // Go to column 3 row 2
+        lcd_putc("Out Of Range");
+      }
+      else {
+        distance = i/58;                              // Calculate the distance
+        lcd_gotoxy(3, 2);                             // Go to column 3 row 2
+        lcd_putc("       cm   ");
+        lcd_gotoxy(6, 2);                             // Go to column 6 row 2
+        printf(lcd_putc,"%3Lu",distance);
+      }
+    }
+    else {
+      lcd_gotoxy(3, 2);                               // Go to column 3 row 2
+      lcd_putc("  Time Out  ");
+    }
+  delay_ms(100);
+  }
+}

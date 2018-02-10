@@ -1,0 +1,35 @@
+// PIC18F4550 ADC example with CCS C compiler
+
+//LCD module connections
+#define LCD_RS_PIN PIN_D0
+#define LCD_RW_PIN PIN_D1
+#define LCD_ENABLE_PIN PIN_D2
+#define LCD_DATA4 PIN_D3
+#define LCD_DATA5 PIN_D4
+#define LCD_DATA6 PIN_D5
+#define LCD_DATA7 PIN_D6
+//End LCD module connections
+
+#include <18F4550.h>
+#device ADC=10
+#fuses NOMCLR INTRC_IO
+#use delay(clock=8000000)
+#include <lcd.c>
+
+unsigned int16 i;
+void main(){
+  setup_oscillator(OSC_8MHZ);
+  lcd_init();                       // Initialize LCD module
+  setup_adc(ADC_CLOCK_DIV_8);      // Set ADC conversion time to 8Tosc
+  setup_adc_ports(AN0);             // Configure RA0 (AN0) as analog
+  set_adc_channel(0);               // Select channel 0 input
+  delay_ms(100);                    // Wait 100ms
+  lcd_gotoxy(3, 1);                 // Go to column 3 row 1
+  lcd_putc("ADC reading:");
+  while(TRUE){
+    i = read_adc();
+    lcd_gotoxy(7, 2);               // Go to column 7 row 2
+    printf(lcd_putc,"%4Lu",i);      // Write i with 4 numbers max
+    delay_ms(10);                   // Wait 10ms
+   }
+}

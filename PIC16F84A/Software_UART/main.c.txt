@@ -1,0 +1,37 @@
+// Software UART example for PIC16F84A.
+
+#include <16F84A.h>
+#fuses HS, NOWDT, PUT, NOPROTECT
+#use delay(clock = 8000000)
+#use fast_io(B)
+#use rs232(xmit = PIN_B4, rcv = PIN_B5, baud = 2400)
+
+const char message[] = "***** PIC16F84A microcontroller UART example *****" ;
+int8 i = 0, j;
+void main(){
+  output_drive(PIN_B4);
+  delay_ms(2000);                                // Wait 2 seconds
+  
+  // Print text
+  printf("Hello world!");
+  
+  // Print list of characters
+  printf("\n\r");                                // Start new line
+  while(message[i] != '\0'){                     // Loop until the end of the string
+    putc(message[i]);                            // Write character
+    delay_ms(100);                               // Wait 100 ms
+    i++;                                         // Increment i
+  }
+  // Print numbers
+  printf("\n\r");                                // Start new line
+  for(i = 0; i < 21; i++){
+    printf("%u\n\r", i);                         // Print i and start new line
+    delay_ms(500);
+  }
+  
+  // Receive and send character via UART
+  while(TRUE){
+    j = getc();                                // UART read character
+    putc(j);                                   // Send it back
+  }
+}
