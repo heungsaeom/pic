@@ -1,0 +1,45 @@
+#include <16f877a.h>
+#device *=16 ADC=10
+#FUSES NOWDT, HS, NOPUT, NOPROTECT, NODEBUG, NOBROWNOUT, NOLVP, NOCPD, NOWRT
+#use delay(clock=12000000)
+ Void main() 
+{
+while (true) 
+{ 
+
+Output_c (0b11111111);
+Output_B (60); 
+Output_c (0b11111110); 
+delay_us(100); 
+ 
+Output_c (0b11111111); 
+Output_B (102); 
+Output_c (0b11111101); 
+delay_us(100); 
+Output_c (0b11111111); 
+Output_B (102); 
+Output_c (0b11111011); 
+delay_us(100); 
+Output_c (0b11111111); 
+Output_B (102); 
+Output_c (0b11110111); 
+delay_us(100); 
+Output_c (0b11111111); 
+Output_B (126); 
+Output_c (0b11101111); 
+delay_us(100); 
+Output_c (0b11111111); 
+Output_B (102); 
+Output_c (0b11011111); 
+delay_us(100); 
+ Output_c (0b11111111); 
+Output_B  (102); 
+Output_c (0b10111111); 
+delay_us(100); 
+Output_c (0b11111111);
+Output_B (102); 
+Output_c (0b01111111); 
+delay_us(100); 
+ 
+} 
+}

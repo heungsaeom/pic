@@ -1,0 +1,30 @@
+#include <16f877a.h>
+#device 16f877a*16ADC=10
+#use delay(clock=4000000)
+#include <lcd_lib_4bit.c>
+float x;
+void docADC();
+void main()
+{
+LCD_Init();
+set_tris_a(0x01);
+while(true)
+{
+docADC();
+x=read_ADC();
+x = ((5000.0f/1023*x)/10) - 273;
+LCD_PutCmd(0x80);
+LCD_PutChar("   Demo LM335");
+LCD_PutCmd(0xC0);
+printf(LCD_PutChar,"Temp is :%f",x);
+LCD_PutChar(223);
+LCD_PutChar("C");
+}
+}
+void docADC()
+{
+setup_ADC(ADC_clock_internal);
+setup_ADC_ports(AN0);
+set_ADC_channel(0);
+delay_us(100);
+}

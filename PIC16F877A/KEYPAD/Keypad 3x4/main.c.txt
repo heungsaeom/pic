@@ -1,0 +1,27 @@
+#include <main.h>
+#include "lcd.c"
+#include <kbd.c> 
+#include <var.h>
+void main() 
+{ 
+   char k=0;                     // Character k to store keypad input
+   delay_ms(1); 
+   /* Peripherals Configurations */ 
+   LCD_Init();                   // Turn LCD ON, along with other initialization commands
+   kbd_init();                   // Initialize Keypad     
+   LCD_Gotoxy(1,1);              // point LCD cursor to col1 row1
+   LCD_PutChar(" Hello World !!");  // print on LCD 
+   LCD_Gotoxy(1,2);              // point LCD cursor to col1 row2
+
+   while(1) // infinite loop 
+   { 
+      k = kbd_getc();            // read keypad input (if exists) 
+      if(k!=0)                   // if key captured 
+      { 
+         LCD_PutChar(k);            // print captured key to lcd
+         k=0;                    // reset k for another loop round
+         delay_ms(250);          // delay between key presses
+      } 
+      delay_ms(1);               // delay_between read trials
+   } 
+} 

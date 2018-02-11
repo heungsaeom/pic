@@ -1,0 +1,64 @@
+#include <16f877a.h>
+#device 16f877a*16ADC=10
+#include <def_877a.h>
+#use delay(clock=4000000)
+#include <lcd_lib_4bit.c>
+#bit led1 =portc.1
+#bit led2 =portc.2
+#bit led3 =portc.3
+#bit led4 =portc.4
+int maled[10]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+float x;
+int chuc,donvi;
+void docADC();
+void hienthi(unsigned int x);
+void main()
+{
+LCD_Init();
+trisa=0x01;
+trisc=0x00;
+trisb=0x00;
+portc=0x00;
+while(true)
+{
+hienthi(x);
+docADC();
+x=read_ADC();
+x = ((5000.0f/1023*x)/10) - 273;
+
+}
+}
+void docADC()
+{
+setup_ADC(ADC_clock_internal);
+setup_ADC_ports(AN0);
+set_ADC_channel(0);
+delay_us(100);
+}
+void hienthi(unsigned int x)
+{
+
+chuc=x/10;
+donvi=x%10;
+
+portb=maled[chuc];
+led2=0;
+delay_ms(1);
+led2=1;
+
+portb=maled[donvi];
+led1=0;
+delay_ms(1);
+led1=1;
+
+portb=0x9C;
+led3=0;
+delay_ms(1);
+led3=1;
+
+portb=0xC6;
+led4=0;
+delay_ms(1);
+led4=1;
+
+}

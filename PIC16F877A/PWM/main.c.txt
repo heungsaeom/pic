@@ -1,0 +1,21 @@
+#include <16F877A.h>
+#include <def_877a.h>
+#device *=16 adc=10
+#FUSES NOWDT, HS, NOPUT, NOPROTECT, NODEBUG, NOBROWNOUT,NOLVP, NOCPD, NOWRT
+#use delay(clock=20000000)
+#include <lcd_lib_4bit.c>
+void main()
+{
+   LCD_Init();
+   LCD_PutCmd(0x80);
+   LCD_PutChar("   DEMO PWM");
+   LCD_PutCmd(0xC0);
+   LCD_PutChar(" BY LAM 3 NGON");   
+   setup_timer_2(T2_DIV_BY_1,59,1);
+   setup_ccp1(CCP_PWM);
+   set_pwm1_duty(72);
+   while(TRUE)
+   {
+
+   }
+} 

@@ -1,0 +1,33 @@
+#include <16F877A.h>
+#fuses NOWDT,PUT,XT,NOPROTECT
+#use delay(clock=4000000)
+#use fast_io(b)
+#use fast_io(d)
+#byte portb=0x06
+#byte portd=0x08
+const unsigned char digital[]={0x3F,0x06,0x5B,0x4F,0X66,0X6D,0X7D,0X07,0X7F,0X6F};
+#int_ext
+void ngat_RB0()
+{
+int i;
+portd=digital[i];
+++i;
+if(i==10)
+{
+i=0;
+}
+}
+
+void main(void)
+{
+set_tris_b(0b00000001);
+set_tris_d(0);
+enable_interrupts(global);
+enable_interrupts(int_ext);
+ext_int_edge(H_to_L);
+portd=0b00111111;
+while(true)
+{
+
+}
+}

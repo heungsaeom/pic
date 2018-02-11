@@ -1,0 +1,49 @@
+#INCLUDE <16F877a.H>
+#FUSES NOWDT,PUT,HS,NOPROTECT,NOLVP
+#USE DELAY(CLOCK=16M)
+const unsigned char Code7Seg[] = {0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82, 0xF8, 0x80, 0x90};
+/* Dinh nghia cac chan cua IC74HC595 */
+#define SHCP_PIN PIN_C0
+#define DS_PIN PIN_C1
+#define STCP_PIN PIN_C2
+unsigned int Cnt = 0,i = 0;
+void IC_74hc595(unsigned int data) 
+{
+    OUTPUT_LOW(SHCP_PIN);
+    for(i=0;i<=7;i++)
+    {
+    if((data & 0x80)==0)
+    OUTPUT_LOW(DS_PIN);
+    else
+    OUTPUT_HIGH(DS_PIN);
+    data=data<<1;
+    OUTPUT_HIGH(SHCP_PIN);
+    OUTPUT_LOW(SHCP_PIN);
+    }
+}
+void IC_74HC595_Output()
+{
+    OUTPUT_LOW(SHCP_PIN);
+    delay_us(5);
+    OUTPUT_HIGH(STCP_PIN);
+    OUTPUT_LOW(STCP_PIN);
+}
+void main(void)
+{
+    SET_TRIS_C (0X00);
+    OUTPUT_C  (0X00);
+    while(1)
+    {
+        IC_74hc595(Code7Seg[Cnt]); 
+        IC_74HC595_Output();
+        Cnt++;
+        for(i=0;i<5;i++)
+        {
+        delay_ms(100);
+        if(Cnt == 10)
+        {
+            Cnt = 0;
+        }
+        }
+    }
+}

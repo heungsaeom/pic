@@ -1,0 +1,28 @@
+#include <main.h>
+#include <uart.c>
+#include <key_4x4.c>
+#include <var.h>
+#include <lcd_4bit.c>
+void main()
+{  
+   unsigned int8 key;
+   key_4x4_init();
+   UART_config();
+   printf("KEY 4X4 DEMO \n");
+   LCD_Init();
+   while(TRUE)
+   {
+      key=get_key_4x4();
+      if(key)
+      {
+         printf("http://xcvn.blogspot.com \n");
+         printf("Phim Vua An: %c \n",key);
+         LCD_PutCmd(0x82);
+         LCD_PutChar("Cover By Lam");         
+         LCD_PutCmd(0xC0);
+         printf(LCD_PutChar,"Phim Vua An: %c",key);
+         while(key)key=get_key_4x4();
+      }
+      delay_ms(10);
+   }
+}                

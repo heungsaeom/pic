@@ -1,0 +1,108 @@
+004-005 @READ_PROGRAM_MEMORY8.P1
+004     @WRITE_PROGRAM_MEMORY8.P2
+008     PSP_DATA
+015-016 CCP_1
+015     CCP_1_LOW
+016     CCP_1_HIGH
+01B     CCP_2_LOW
+01B-01C CCP_2
+01C     CCP_2_HIGH
+020     @TRIS_C
+021     sec
+022     min
+023     hr
+024-037 k
+038     z
+039-04C k1
+04D     day1
+04E     date
+04F     month
+050     year
+051-052 @sprintf_string
+053     @I2C_READ_1.P1
+053     lcd_cmd.b
+053     convert.k
+053     @I2C_WRITE_1.P1
+053-054 lcd_array.a
+053     @PRINTF_D_80.P1
+053     MAIN.@SCRATCH
+054     lcd_cmd.b1
+054     @PRINTF_D_80.P1
+054     convert.a0
+054     @I2C_READ_1.@SCRATCH
+055     convert.a1
+055     lcd_cmd.@SCRATCH
+055     lcd_array.@SCRATCH
+055     @I2C_READ_1.@SCRATCH
+055     @PRINTF_D_80.@SCRATCH
+056     lcd_str.a
+056     convert.a
+056     @PRINTF_D_80.@SCRATCH
+057     lcd_str.a1
+057     @MUL88.P1
+057     @PRINTF_D_80.@SCRATCH
+057     convert.@SCRATCH
+058     @MUL88.P1
+058     lcd_str.@SCRATCH
+058     @PRINTF_D_80.@SCRATCH
+059     @DIV88.P1
+059     @SPRINTF.P2
+05A     @DIV88.P1
+05B     @DIV88.@SCRATCH
+077     @SCRATCH
+078     @SCRATCH
+078     _RETURN_
+079     @SCRATCH
+07A     @SCRATCH
+07B     @SCRATCH
+10D-10E @WRITE_PROGRAM_MEMORY8.P1
+10D-10E @READ_PROGRAM_MEMORY8.P2
+
+0086  lcd_init
+0059  lcd_cmd
+0287  lcd_str
+02BA  lcd_array
+00E2  @I2C_READ_1
+0098  @I2C_WRITE_1
+02D4  MAIN
+0215  @SPRINTF
+0200  @DIV88
+0222  @PRINTF_D_80
+0004  @const89
+000F  @const90
+001A  @const91
+0026  @const92
+0034  @const93
+0041  @const94
+004C  @const95
+037F  @goto10166
+015C  rtc_get_time
+0127  convert
+0132  @MUL88
+02D4  @cinit
+
+Project Files:
+    ds1307 with pic.c
+    C:\Program Files (x86)\PICC\devices\16F877.h
+    lcd_4bit.c
+
+Units:
+    D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.c (main)
+
+Compiler Settings:
+    Processor:      PIC16F877
+    Pointer Size:   16
+    ADC Range:      0-255
+    Opt Level:      0
+    Short,Int,Long: 1,8,16
+
+Output Files:
+    Errors:      D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.err
+    Ext Symbols: D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.esym
+    INHX8:       D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.hex
+    Symbols:     D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.sym
+    List:        D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.lst
+    Debug/COFF:  D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.cof
+    Project:     D:\PROJECT_BLOG_CCS\DS1307\ds1307 with pic.PJT
+    Call Tree:   ds1307 with pic.tre
+    Statistics:  ds1307 with pic.sta

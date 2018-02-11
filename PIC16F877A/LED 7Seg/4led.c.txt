@@ -1,0 +1,44 @@
+//RC0-RC7: data 4led 
+//RA1,RA2,RA3,RA4
+
+#include <16f877a.h>
+#use delay(clock=800000)
+#fuses HS,NOWDT
+#use fast_io (b)
+#use fast_io (c)
+#byte portb=0x06
+#bit rc0=0x07.0
+#bit rc1=0x07.1
+#bit rc2=0x07.2
+#bit rc3=0x07.3
+const unsigned char maled[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};
+void main(void)
+{
+set_tris_b(0x00);
+set_tris_c(0x00);
+output_b(0);
+output_c(0);
+while(true)
+{
+// hien thi so 2 
+portb=0x5b;
+rc0=0;
+delay_ms(10);
+rc0=1;
+// hien thi so 0
+portb=0x3f;
+rc1=0;
+delay_ms(10);
+rc1=1;
+// hien thi so 1
+portb=0x06;
+rc2=0;
+delay_ms(10);
+rc2=1;
+// hien thi so 5
+portb=0x6d;
+rc3=0;
+delay_ms(10);
+rc3=1;
+}
+}

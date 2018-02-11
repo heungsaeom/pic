@@ -1,0 +1,82 @@
+
+ROM used:   4158/8192 (51%)
+            4202/8192 (51%) including unused fragments
+
+            2.4 Average locations per line
+            8.2 Average locations per statement
+
+RAM used:   41/368 (11%) at main() level
+            73/368 (20%) worst case
+
+Stack used: 6 worst case (3 in main + 3 for interrupts)
+Stack size: 8
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+  484   433  85  Realtime Clock V1.c
+  125     0   0  Realtime Clock V1.h
+  672     0   0  ..\..\..\..\Program Files\PICC\Devices\16f877A.h
+  131    75  15  ds1307.c
+  312     0   0  PIC16F877A_registers.h
+----- -----
+ 1724   508 Total
+
+Page ROM  %  RAM    Vol Diff  Functions:
+---- --- --- ---    --- ----  ----------
+1     24   1    1             @delay_ms1
+0     84   2    3             @I2C_READ_1
+0     92   2    1             @I2C_WRITE_1
+0    273   7    0             @const626
+0    273   7    0             @const630
+0    273   7    0             @const634
+0    273   7    0             @const638
+1     19   0    3    242  5.7  bin2bcd
+0     19   0    3    155  4.7  bcd2bin
+ Inline         3    240  3.8  ds1307_init
+1    135   3    4    245  2.5  ds1307_set_time
+1    149   4    5    248  2.1  ds1307_set_date
+ Inline         5    383  3.1  ds1307_get_date
+ Inline         4    315  3.0  ds1307_get_time
+0     45   1    0    393  3.8  RTCC_isr
+1    365   9    1    414  5.6  TIMER1_isr
+0     21   1    3             @DIV88
+0    509  12   12   5511  9.4  Led7segment
+0     26   1    0             @goto10941
+1     60   1    4    121  3.0  ADC_Convert
+0     21   1    5             @MUL1616
+0     37   1    5             @DIV1616
+0     29   1    2             @ITOF
+1     31   1    4             @SFTOI
+1    196   5   11   1097  7.4  VietNam_Calendar
+0      3   0    1     30  1.7  OutLed
+1     90   2    3    874  7.8  key
+ Inline         1   2437  6.4  Set_time
+1    450  11    0    491  6.5  Setup
+2    106   3    0    117  2.3  MAIN
+1     32   1    0    212  2.3  Sys_init
+1    463  11    0    315  2.3  Program_init
+ Inline         0             @cinit1
+
+Program metrics:
+    Functions               19
+    Statements              508
+    Comments                452
+    Volume (V)              21212
+    Difficulty (D)          83.7
+    Effort to implement (E) 1774743
+    Time to implement (T)   27 hours, 23 minutes
+    Est Delivered Bugs (B)  5
+    Cyclomatic Complexity   99
+    Maintainability (MI)    128
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00003     4  0  
+00004-0003B    56  0  
+0003C-007FF  1978  10  
+00800-00FFF  2014  34  
+01000-017FF   106  1942  
+01800-01FFF     0  2048  
+
+
+

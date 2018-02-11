@@ -1,0 +1,54 @@
+[PROJECT]
+Target=Realtime Clock V1.hex
+Development_Mode=
+Processor_Text=PIC16F877A
+ToolSuite=CCS
+Processor=0x877A
+CCSVersion=5.025
+Compiler=PCM
+[E:\PROJECT\2013\Realtime Clock V1.0\Realtime Clock V1]
+Type=4
+Path=
+FileList=
+BuildTool=
+OptionString=
+AdditionalOptionString=
+[mru-list]
+1=Realtime Clock V1.c
+[Windows]
+0=0000 %S 0 0 796 451 3 0
+[Opened Files]
+1=Realtime Clock V1.c
+2=
+3=PIC16F877A_registers.h
+4=ds1307.c
+5=Realtime Clock V1.lst
+6=Realtime Clock V1.sym
+7=C:\Program Files\PICC\devices\16f877A.h
+8=
+9=
+10=C:\Program Files\PICC\drivers\ctype.h
+11=Realtime Clock V1.lst
+12=Realtime Clock V1.cof.txt
+13=Realtime Clock V1.sym
+14=Realtime Clock V1.STA
+15=
+16=
+[Target Data]
+FileList=Realtime Clock V1.c
+[Directories]
+Include=C:\Program Files\PICC\Devices\;C:\Program Files\PICC\Drivers\
+[Realtime Clock V1.c]
+Type=4
+
+[ProjectLog]
+Days=1
+D1=20-01-2015
+D1_L=4
+D1_L1=[34863]Project Opened.
+D1_L2=[35249]Project Closed.
+D1_L3=[36981]Project Opened.
+D1_L4=[37044]Project Closed.
+[Units]
+Count=1
+1=Realtime Clock V1 (main)

@@ -1,0 +1,12 @@
+*** Error 24 "C:\Program Files\PICC\Devices\16f877A.h" Line 11(9,19): Unknown device type    -- Try PCM
+      1 Errors,  0 Warnings.
+Build Failed.
+>>> Warning 203 "C:\Users\ADMIN\Desktop\Realtime Clock V1.00\ds1307.c" Line 10(1,1): Condition always TRUE
+>>> Warning 205 "Realtime Clock V1.c" Line 312(1,1): Unsigned variable is never less than zero
+>>> Warning 204 "Realtime Clock V1.c" Line 312(1,1): Condition always FALSE
+>>> Warning 216 "Realtime Clock V1.c" Line 482(1,2): Interrupts disabled during call to prevent re-entrancy:  (@I2C_WRITE_1)
+>>> Warning 216 "Realtime Clock V1.c" Line 482(1,2): Interrupts disabled during call to prevent re-entrancy:  (VietNam_Calendar)
+>>> Warning 216 "Realtime Clock V1.c" Line 482(1,2): Interrupts disabled during call to prevent re-entrancy:  (ADC_Convert)
+      Memory usage:   ROM=51%      RAM=11% - 20%
+      0 Errors,  6 Warnings.
+Build Successful.

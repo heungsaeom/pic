@@ -1,0 +1,3 @@
+>>> Warning 203 "D:\PROJECT_BLOG_CCS\DS1307_LCD\DS1307.c" Line 233(1,1): Condition always TRUE
+      Memory usage:   ROM=18%      RAM=27% - 30%
+      0 Errors,  1 Warnings.

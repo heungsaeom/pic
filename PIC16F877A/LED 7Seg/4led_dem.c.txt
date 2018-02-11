@@ -1,0 +1,50 @@
+#include <16f877a.h>
+#fuses NOLVP,NOWDT,PUT,XT
+#use delay(clock=8000000)
+#byte porta=0x05
+#bit ra0=0x05.0
+#bit ra1=0x05.1
+#bit ra2=0x05.2
+#bit ra3=0x05.3
+const unsigned char maled[10]={0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82,0xF8, 0x80, 0x90};
+int16 dem,chuc,donvi,nghin,tram;
+void main (void)
+{
+set_tris_c(0x00);
+set_tris_a(0x00);
+output_c(0);
+dem=9999; // so muon dem ve
+while(true)
+{
+nghin=dem/1000;
+tram = (dem - nghin*1000)/100;
+chuc=(dem - nghin*1000 - tram*100)/10;
+donvi=dem - nghin*1000 - tram*100 - chuc*10;
+//----phan tach so----\\
+output_c(maled[nghin]);
+ra0=0;
+delay_ms(10);
+ra0=1;
+//-----------hien thi so hang nghin------\\
+output_c(maled[tram]);
+ra1=0;
+delay_ms(10);
+ra1=1;
+//---------hien thi so hang tram---------\\
+output_c(maled[chuc]);
+ra2=0;
+delay_ms(10);
+ra2=1;
+//---------hien thi so hang chuc---------\\
+output_c(maled[donvi]);
+ra3=0;
+delay_ms(10);
+ra3=1;
+//---------hien thi so hang donvi---------\\
+dem--;
+if(dem==9000)
+{
+dem=9999;
+}
+}
+}

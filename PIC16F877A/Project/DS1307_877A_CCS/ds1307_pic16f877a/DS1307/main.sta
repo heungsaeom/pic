@@ -1,0 +1,66 @@
+
+ROM used: 906 (11%)
+          906 (11%) including unused fragments
+
+          2 Average locations per line
+          10 Average locations per statement
+
+RAM used: 58 (16%) at main() level
+          66 (18%) worst case
+
+Stack used: 2 worst case (out of 8 total available)
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+   94    56  61  main.c
+  281     0   0  C:\Program Files (x86)\PICC\devices\16F877.h
+   80    36  39  lcd_4bit.c
+----- -----
+  455    92 Total
+
+Page ROM  %  RAM   Vol Diff  Functions:
+---- --- --- ---   --- ----  ----------
+0     18   2   0    86  1.3  lcd_init
+0     45   5   3   295  2.8  lcd_cmd
+0     51   6   3   322  3.3  lcd_str
+0     26   3   3    61  1.9  lcd_array
+0     69   8   3             @I2C_READ_1
+0     74   8   1             @I2C_WRITE_1
+0    171  19   1   759  4.2  MAIN
+0     13   1   1   183  4.7  @SPRINTF
+0     21   2   3             @DIV88
+0    101  11   6             @PRINTF_D_80
+0     11   1   0             @const89
+0     11   1   0             @const90
+0     12   1   0             @const91
+0     14   2   0             @const92
+0     13   1   0             @const93
+0     11   1   0             @const94
+0     13   1   0             @const95
+0     11   1   0             @goto10166
+0    164  18   0   723  3.4  rtc_get_time
+0     53   6   5   183  4.7  convert
+ Inline        2             @MUL88
+
+Program metrics:
+    Functions               8
+    Statements              92
+    Comments                71
+    Volume (V)              3951
+    Difficilty (D)          25.5
+    Effort to implement (E) 100678
+    Time to implement (T)   1 hours, 33 minutes
+    Est Delivered Bugs (B)  1
+    Cyclomatic Complexity   8
+    Maintainability (MI)    49
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00003     4  0  
+00004-007FF   902  1142  
+00800-00FFF     0  2048  
+01000-017FF     0  2048  
+01800-01FFF     0  2048  
+
+
+

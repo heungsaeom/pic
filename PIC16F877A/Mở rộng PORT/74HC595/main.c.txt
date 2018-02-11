@@ -1,0 +1,43 @@
+#include <16F877A.h>
+#device *=16 ADC=10
+#use delay(clock=20000000)
+#FUSES NOWDT, HS, NOPUT, NOPROTECT, NODEBUG, NOBROWNOUT, NOLVP, NOCPD, NOWRT
+/* Dinh nghia cac chan cua IC74HC595 */
+#define SHCP_PIN  PIN_C0
+#define DS_PIN   PIN_C1
+#define STCP_PIN     PIN_C2
+void IC_74hc595(int data) 
+{
+int i;
+output_low(SHCP_PIN);
+for(i=0;i<=7;i++)
+{
+
+if((data & 0x80)==0)
+output_low(DS_PIN);
+else
+output_high(DS_PIN);
+data=data<<1;
+output_high(SHCP_PIN);
+output_low(SHCP_PIN);
+}
+}
+void IC_74HC595_Output()
+{
+output_low(STCP_PIN);
+delay_us(5);
+output_high(STCP_PIN);
+output_low(STCP_PIN);
+}
+void main(void)
+{
+while(1)
+{
+IC_74hc595(0XAA);
+IC_74HC595_Output(); 
+delay_ms(100);
+IC_74hc595(0X55);
+IC_74HC595_Output(); 
+delay_ms(100);
+}
+}

@@ -1,0 +1,138 @@
+004-005 @READ_PROGRAM_MEMORY8.P1
+004     @WRITE_PROGRAM_MEMORY8.P2
+008     PSP_DATA
+008     lcd
+015     CCP_1_LOW
+015-016 CCP_1
+016     CCP_1_HIGH
+01B-01C CCP_2
+01B     CCP_2_LOW
+01C     CCP_2_HIGH
+020     @TRIS_C
+021-06D days_of_week
+06E-06F @sprintf_string
+070     sec
+071     min
+072     hrs
+073     day
+074     month
+075     yr
+076     dow
+077     @SCRATCH
+078     @SCRATCH
+078     _RETURN_
+079     @SCRATCH
+07A     @SCRATCH
+07B     @SCRATCH
+09C.6   C1OUT
+09C.7   C2OUT
+0A0-0A3 fecha
+0A4-0A5 ds1307_get_day_of_week.ptr
+0A4     lcd_init.i
+0A4     ds1307_set_date_time.day
+0A4     ds1307_get_time.@SCRATCH
+0A4     MAIN.@SCRATCH
+0A5     ds1307_set_date_time.mth
+0A5     ds1307_get_time.@SCRATCH
+0A5     lcd_init.@SCRATCH
+0A5     MAIN.@SCRATCH
+0A6     @PRINTF_U_128.P1
+0A6     ds1307_set_date_time.year
+0A6     ds1307_get_day_of_week.lday
+0A7     ds1307_get_day_of_week.lmonth
+0A7     ds1307_set_date_time.dow
+0A7     @PRINTF_U_128.P1
+0A8     @DIV88.P1
+0A8     lcd_putc.c
+0A8     ds1307_get_day_of_week.lyr
+0A8     ds1307_set_date_time.hr
+0A9     @delay_ms1.P1
+0A9     ds1307_set_date_time.min
+0A9     @DIV88.P1
+0A9     ds1307_get_day_of_week.ldow
+0A9     lcd_gotoxy.x
+0AA     lcd_gotoxy.y
+0AA     @MUL88.P1
+0AA     ds1307_set_date_time.sec
+0AA     ds1307_get_date.@SCRATCH
+0AA     ds1307_get_day_of_week.@SCRATCH
+0AA     @DIV88.@SCRATCH
+0AB     ds1307_bin2bcd.binary_value
+0AB     @MUL88.P1
+0AB     lcd_gotoxy.address
+0AB     ds1307_set_date_time.@SCRATCH
+0AB     ds1307_get_date.@SCRATCH
+0AB     ds1307_get_day_of_week.@SCRATCH
+0AC     ds1307_bin2bcd.temp
+0AC     ds1307_get_day_of_week.@SCRATCH
+0AC     lcd_gotoxy.@SCRATCH
+0AD     lcd_send_byte.address
+0AD     ds1307_bin2bcd.retval
+0AD     ds1307_get_day_of_week.@SCRATCH
+0AE     @I2C_READ_1.P1
+0AE     @SPRINTF.P2
+0AE     lcd_send_byte.n
+0AE     @I2C_WRITE_1.P1
+0AF     lcd_read_byte.low
+0AF     @I2C_READ_1.@SCRATCH
+0AF     lcd_send_byte.@SCRATCH
+0B0     lcd_read_byte.high
+0B0     lcd_send_nibble.n
+0B0     ds1307_bcd2bin.bcd_value
+0B0     @I2C_READ_1.@SCRATCH
+0B1     ds1307_bcd2bin.temp
+0B1     lcd_read_byte.@SCRATCH
+0B2     ds1307_bcd2bin.@SCRATCH
+10D-10E @WRITE_PROGRAM_MEMORY8.P1
+10D-10E @READ_PROGRAM_MEMORY8.P2
+
+0025  @delay_ms1
+01BC  @I2C_READ_1
+00CC  @I2C_WRITE_1
+012B  ds1307_set_date_time
+044A  ds1307_get_date
+04D3  ds1307_get_time
+021C  ds1307_get_day_of_week
+02B2  @MUL88
+02F9  @SPRINTF
+0116  ds1307_bin2bcd
+0207  ds1307_bcd2bin
+0004  LCD_INIT_STRING
+0049  lcd_read_byte
+003A  lcd_send_nibble
+0048  lcd_send_byte
+0092  lcd_init
+0314  lcd_gotoxy
+0328  lcd_putc
+03AF  MAIN
+0359  @DIV88
+0370  @PRINTF_U_128
+000C  @const151
+03AF  @cinit
+
+Project Files:
+    RTC.c
+    C:\Program Files (x86)\PICC\devices\16f877A.h
+    DS1307.c
+    C:\Program Files (x86)\PICC\drivers\lcd.c
+
+Units:
+    D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.c (main)
+
+Compiler Settings:
+    Processor:      PIC16F877A
+    Pointer Size:   16
+    ADC Range:      0-255
+    Opt Level:      0
+    Short,Int,Long: 1,8,16
+
+Output Files:
+    Errors:      D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.err
+    Ext Symbols: D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.esym
+    INHX8:       D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.hex
+    Symbols:     D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.sym
+    List:        D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.lst
+    Debug/COFF:  D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.cof
+    Project:     D:\PROJECT_BLOG_CCS\DS1307_LCD\RTC.PJT
+    Call Tree:   RTC.tre
+    Statistics:  RTC.sta
