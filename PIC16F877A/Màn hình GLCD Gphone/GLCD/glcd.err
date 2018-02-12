@@ -1,3 +1,0 @@
->>> Warning 203 "glcd.c" Line 25(1,1): Condition always TRUE
-      Memory usage:   ROM=22%      RAM=9% - 19%
-      0 Errors,  1 Warnings.

@@ -1,63 +1,118 @@
-#include <16f877a.h>
-#fuses HS,NOWDT
-#use delay(clock=20000000)
-#include <HDM64GS12.c>
-#include <graphics.c>
-#use standard_io(a)
-void main (void)
+#include<pic16f877a.h>
+
+/* Configure the data bus and Control bus as per the hardware connection
+   Dtatus bus is connected to PB0:PB7 and control bus PD0:PD4*/
+#define GlcdDataBus      PORTB
+#define GlcdControlBus   PORTD
+
+#define GlcdDataBusDirnReg   TRISB
+#define GlcdCtrlBusDirnReg   TRISD
+
+#define RS     0
+#define RW     1
+#define EN     2
+#define CS1    3
+#define CS2    4
+
+/* 5x7 Font including 1 space to display HELLO WORLD */
+char H[]={0x7F, 0x08, 0x08, 0x08, 0x7F, 0x00};
+char E[]={0x7F, 0x49, 0x49, 0x49, 0x41, 0x00};
+char L[]={0x7F, 0x40, 0x40, 0x40, 0x40, 0x00};
+char O[]={0x3E, 0x41, 0x41, 0x41, 0x3E, 0x00};
+
+char W[]={0x3F, 0x40, 0x38, 0x40, 0x3F, 0x00};
+char R[]={0x7F, 0x09, 0x19, 0x29, 0x46, 0x00};
+char D[]={0x7F, 0x41, 0x41, 0x22, 0x1C, 0x00};
+
+
+/* local function to generate delay */
+void delay(int cnt)
 {
-CHAR A5 [ ] = "A5";
-CHAR A4 [ ] = "A4";
-CHAR A3 [ ] = "A3";
-CHAR A2 [ ] = "A2";
-CHAR A1 [ ] = "A1";
-CHAR A0 [ ] = "A0";
-CHAR IN [ ] = "SEC A";
-glcd_init(ON);
-glcd_text57(33,30,A5,1,1);
-glcd_text57(49,30,A4,1,1);
-glcd_text57(65,30,A3,1,1);
-glcd_text57(81,30,A2,1,1);
-glcd_text57(97,30,A1,1,1);
-glcd_text57(113,30,A0,1,1);
-glcd_text57(30,5,IN,2,1);
-while(1)
-{
-if(input_state(PIN_A5)==0)
-glcd_rect(32,40,46,60,1,1);
-else
-glcd_rect (30,40,46,60,1,0,);
-glcd_rect(32,40,46,60,0,1);
-//
-if(input_state(PIN_A4)==0)
-glcd_rect(48,40,62,60,1,1);
-else
-glcd_rect (48,40,62,60,1,0,);
-glcd_rect(48,40,62,60,0,1);
-//
-if(input_state(PIN_A3)==0)
-glcd_rect(64,40,78,60,1,1);
-else
-glcd_rect (64,40,78,60,1,0,);
-glcd_rect(64,40,78,60,0,1);
-//
-if(input_state(PIN_A2)==0)
-glcd_rect(80,40,94,60,1,1);
-else
-glcd_rect (80,40,94,60,1,0,);
-glcd_rect(80,40,94,60,0,1);
-//
-if(input_state(PIN_A1)==0)
-glcd_rect(96,40,110,60,1,1);
-else
-glcd_rect (96,40,110,60,1,0,);
-glcd_rect(96,40,110,60,0,1);
-//
-if(input_state(PIN_A0)==0)
-glcd_rect(112,40,126,60,1,1);
-else
-glcd_rect (112,40,126,60,1,0,);
-glcd_rect(112,40,126,60,0,1);
-delay_ms(400);
+   int i;
+    for(i=0;i<cnt;i++);
 }
+
+
+void Glcd_SelectPage0() // CS1=1, CS2=0
+{
+    GlcdControlBus |= (1<<CS1);
+    GlcdControlBus &= ~(1<<CS2);
+}
+
+void Glcd_SelectPage1() // CS1=0, CS1=1
+{
+    GlcdControlBus &= ~(1<<CS1);
+    GlcdControlBus |= (1<<CS2);
+}
+
+/* Function to send the command to LCD */
+void Glcd_CmdWrite(char cmd)
+{
+    GlcdDataBus = cmd;           //Send the Command nibble
+    GlcdControlBus &= ~(1<<RS);  // Send LOW pulse on RS pin for selecting Command register
+    GlcdControlBus &= ~(1<<RW);  // Send LOW pulse on RW pin for Write operation
+    GlcdControlBus |= (1<<EN);   // Generate a High-to-low pulse on EN pin
+    delay(100);
+    GlcdControlBus &= ~(1<<EN);
+
+    delay(1000);
+}
+
+/* Function to send the Data to LCD */
+void Glcd_DataWrite(char dat)
+{
+    GlcdDataBus = dat;           //Send the data on DataBus nibble
+    GlcdControlBus |= (1<<RS);   // Send HIGH pulse on RS pin for selecting data register
+    GlcdControlBus &= ~(1<<RW);  // Send LOW pulse on RW pin for Write operation
+    GlcdControlBus |= (1<<EN);   // Generate a High-to-low pulse on EN pin
+    delay(100);
+    GlcdControlBus &= ~(1<<EN);
+
+    delay(1000);
+}
+
+void Glcd_DisplayChar(char *ptr_array)
+{
+    int i;
+    for(i=0;i<6;i++) // 5x7 font, 5 chars + 1 blankspace
+        Glcd_DataWrite(ptr_array[i]);
+}
+
+
+int main()
+{
+    GlcdDataBusDirnReg = 0x00;  // Configure all the LCD pins as output
+    GlcdCtrlBusDirnReg = 0x00;  // Configure the Ctrl pins as output
+
+    /* Select the Page0/Page1 and Turn on the GLCD */
+    Glcd_SelectPage0();
+    Glcd_CmdWrite(0x3f);
+    Glcd_SelectPage1();
+    Glcd_CmdWrite(0x3f);
+    delay(100);
+
+    /* Select the Page0/Page1 and Enable the GLCD */
+    Glcd_SelectPage0();
+    Glcd_CmdWrite(0xc0);
+    Glcd_SelectPage1();
+    Glcd_CmdWrite(0xc0);
+    delay(100);
+
+    Glcd_SelectPage0(); // Display HELLO on Page0, Line1
+    Glcd_CmdWrite(0xb8);
+    Glcd_DisplayChar(H);
+    Glcd_DisplayChar(E);
+    Glcd_DisplayChar(L);
+    Glcd_DisplayChar(L);
+    Glcd_DisplayChar(O);
+
+    Glcd_SelectPage1(); // Display WORLD on Page1, Last line
+    Glcd_CmdWrite(0xbF);
+    Glcd_DisplayChar(W);
+    Glcd_DisplayChar(O);
+    Glcd_DisplayChar(R);
+    Glcd_DisplayChar(L);
+    Glcd_DisplayChar(D);
+
+    while(1);
 }

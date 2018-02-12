@@ -1,0 +1,19 @@
+#include <16F877A.h>
+#device ADC=10
+#use delay(crystal=20000000)
+#use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8,stream=PORT1)
+#include <AT25256.C>
+void main()
+{
+   init_ext_eeprom();
+   write_ext_eeprom(0x01,5);
+   while(TRUE)
+   {
+      char text[]="0";
+      text[0]=read_ext_eeprom(0x01)+48;
+      printf(text);
+      putc(13); // xuong dong
+      putc(10);
+      delay_ms(500);
+   }
+}

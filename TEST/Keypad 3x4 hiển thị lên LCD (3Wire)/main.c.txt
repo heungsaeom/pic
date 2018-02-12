@@ -1,0 +1,40 @@
+#include <16F877A.h>
+#device ADC=10
+#use delay(crystal=20000000)
+
+#define LCD_DATA_PIN PIN_B0   //chan 14-DS cua 74hc595
+#define LCD_CLOCK_PIN PIN_B1  //chan 11-SHCP va 12-STCP cua 74hc595
+#define LCD_EN_PIN PIN_B2     //chan EN cua LCD
+// LCD RS - Q0, LCD RW - GND ,LCD EN - PIN_B2, D4 - Q1, D5 - Q2,D6 - Q3, D7 - Q4
+#include "3WireLCD.c"
+#include <KBD.C>
+void main()
+{
+   kbd_init();
+   char k=0;
+   char key[10];
+   int i=0;
+   lcd_initialize();                      // Initialize LCD module
+   lcd_cmd(LCD_CLEAR);                    // Clear the LCD
+   lcd_goto(2, 1);                       // Go to column 3 row 1
+   LCD_Out("Elnino Keypad");
+   lcd_goto(3, 2); 
+   while(TRUE)
+   {
+      k = kbd_getc();            // read keypad input (if exists) 
+      if(k!=0)                   // if key captured 
+      { 
+         if(k==1)
+         {
+            LCD_Out("OK");
+         }
+         LCD_Out(k);// print captured key to lcd
+         k=0;                    // reset k for another loop round
+         delay_ms(300);    // delay between key presses
+         k=0;    
+      } 
+      
+      //TODO: User Code
+   }
+
+}

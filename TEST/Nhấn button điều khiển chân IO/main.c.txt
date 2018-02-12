@@ -1,0 +1,26 @@
+#include <16F877A.h>
+#use delay(crystal=20000000)
+#use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8,stream=PORT1)
+void main()
+{
+   while(TRUE)
+   {
+      if(input(PIN_A0)==0)
+      {
+         output_HIGH(PIN_A1);
+         printf("LED ON");
+         putc(13);
+         putc(10);
+      }
+      else
+      {
+         output_LOW(PIN_A1);
+         printf("LED OFF");
+         putc(13);
+         putc(10);
+         
+      }
+      delay_ms(300); 
+   }
+
+}

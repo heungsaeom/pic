@@ -1,0 +1,21 @@
+#include <16F877A.h>
+#include "dht.c"
+
+#use delay(crystal=20000000)
+#use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8,stream=PORT1)
+
+void main()
+{
+   while(TRUE)
+   {
+      printf("Nhiet do:");
+      printf(docnhietdo());
+      putc(13); // xuong dong
+      putc(10);
+      printf("Do am:");
+      printf(docdoam());
+      putc(13);
+      putc(10);
+      delay_ms(1000); 
+   }
+}

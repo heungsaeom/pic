@@ -1,0 +1,41 @@
+#include <16F877A.h>
+#device ADC=10
+#use delay(crystal=20000000)
+#use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8,stream=PORT1)
+#include <DS1302.C>
+unsigned int8 gio,phut,giay,ngay,thang,nam,thu;
+void main()
+{
+   rtc_init();                       // Khoi tao ds1302
+ //  rtc_set_datetime(12,2,18,2,1,51); // set ngay,thang,nam,thu,gio,phut
+   while(TRUE)
+   {
+      rtc_get_time(gio,phut,giay);    //lay du lieu thoi gian
+      rtc_get_date(ngay,thang,nam,thu); // lay du lieu ngay thang
+
+      char timegio[]="00:00:00";
+      timegio[0]=gio/10+48;
+      timegio[1]=gio%10+48;
+      timegio[3]=phut/10+48;
+      timegio[4]=phut%10+48;
+      timegio[6]=giay/10+48;
+      timegio[7]=giay%10+48;
+      printf(timegio);     // truyen du lieu qua UART
+      putc(13); // xuong dong
+      putc(10);
+      
+      char ngaythang[]="Thu 0,00/00/2000";
+      ngaythang[4]=thu+48;
+      ngaythang[6]=ngay/10+48;
+      ngaythang[7]=ngay%10+48;
+      ngaythang[9]=thang/10+48;
+      ngaythang[10]=thang%10+48;
+      ngaythang[14]=nam/10+48;
+      ngaythang[15]=nam%10+48;
+      printf(ngaythang);
+
+      putc(13); // xuong dong
+      putc(10);
+      delay_ms(900);
+   }
+}

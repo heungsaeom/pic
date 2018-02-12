@@ -1,0 +1,358 @@
+#include <16f877a.h> // select chip
+#Device  PASS_STRINGS=IN_RAM
+#fuses HS,NOLVP,NOPROTECT // settings chip 
+#use delay(clock=20M) // select clock speed
+#use rs232(baud=9600, xmit=PIN_C6,rcv=PIN_C7,ERRORS) // serial port rotuine 
+#define FASTER_BUT_MORE_ROM
+#include <string.h>
+#include <stdlib.h>
+#byte PORTB=6
+#bit  L1=PORTB.7
+#bit  L2=PORTB.6
+#bit  L3=PORTB.5
+#bit  L4=PORTB.4
+
+#byte PORTA=5
+#bit MODEM_OK_LED=PORTA.0
+
+#define command_mode 0
+#define data_mode    1
+
+int mode=data_mode;     // bluetooth mode {data or command}
+int new_line=0;         // a flag to indicate a complete line was received
+int i=0;
+char buffer[64];
+char SMS_CONTENT[64];
+const char* bluetooth_address = "101DC0A70AEF"; // Remote Bluetooth (edit this)
+const char* myNumber="\"078xxxxxxx\"";       // Mobile number to receive replys
+
+/*************************************/
+// Bluetooth Module Response Strings //
+/*************************************/
+const char* CONNECTED = "BGC";       // Bluetooth connection established
+const char* DISCONNECTED = "BGD";    // Bluetooth connection closed
+const char* CMD = "CMD";             // Bluetooth entered command mode
+/*************************************/
+
+/*************************************/
+// Bluetooth Module Command Strings  //
+/*************************************/
+const char* CMD_MODE = "$$$";        // Enter Command Mode
+/*************************************/  
+
+/*************************************/
+//  AT-COMMAND Set Response Strings  //
+/*************************************/
+const char* OK = "OK";               // AT-Command was sucessful  
+const char* CMTI= "+CMTI:";          // New SMS indicator
+/*************************************/
+
+/*************************************/
+//  AT-COMMAND Set Command Strings   //
+/*************************************/
+const char* SMS_TEXT_MODE = "AT+CMGF=1\r";
+const char* SMS_INDICATE  = "AT+CNMI=2,1,2,0,0\r";
+const char* SMS_READ      = "AT+CMGR=";
+const char* SMS_SEND      = "AT+CMGS=";
+const char* SMS_DELETE    = "AT+CMGD=";
+/*************************************/
+
+int find_string(char*,char*);        // finds a string within another string
+void clear_buffer();                 // clear buffer, reset counters and flags
+void bluetooth_command_mode();       // set bluetooth mode to command mode
+int  bluetooth_connect(char*);       // connect to a remote bluetooth address
+int get_sms_index(char*);            // gets the index where a new sms was stored
+int read_sms(int);                   // reads sms at some index and detects commands in it
+void delete_sms(int);                // delete sms at some index
+void send_sms(char*,char*);          // send an SMS to a given mobile number
+void decode_command();               // decode and do command (if found)
+
+void main()
+{
+   int connection_established=0;    // a flag to indicate connection to mobile
+   int mobile_configured=0;         // a flag to indicate mobile configuration
+   enable_interrupts(global);    
+   enable_interrupts(int_rda);      // enable serial interrupt
+                                    // see void isr() below
+   setup_adc(ADC_OFF);              
+   setup_adc_ports(NO_ANALOGS);
+   output_b(0);
+   output_a(0);
+
+  
+   delay_ms(2000);                  // wait 2 seconds for the bluetooth module to boot
+ /*************************************/
+   while(1)//infinite loop
+   {
+      if(!connection_established && mode==data_mode)
+      {
+         bluetooth_command_mode();  // go into command mode to make a connection
+      }
+
+      if(!connection_established && mode==command_mode)
+      {
+         connection_established=bluetooth_connect(bluetooth_address); // try to connect to mobile
+         if(!connection_established) // if failed, wait 2 seconds
+         {
+            delay_ms(2000);
+            clear_buffer();
+         }
+      }
+
+
+      if(connection_established && !mobile_configured)
+      {
+         repeat:
+         printf(SMS_TEXT_MODE); // configure mobile SMS mode (text mode)
+         delay_ms(500);
+         printf(SMS_INDICATE);  // configure new SMS indications (ON)
+         delay_ms(500);
+
+         if(find_string(buffer,OK)) // if mobile replied by "OK"
+         {
+            mobile_configured=1;
+            clear_buffer();
+         }
+
+         else  // if not, retry
+         {
+            clear_buffer();
+            goto repeat;
+         }
+      }
+
+      
+      while(connection_established && mobile_configured)
+      {
+
+         if(find_string(buffer,DISCONNECTED))   // if bluetooth disconnected
+            {
+               connection_established=0;
+            }
+
+if(new_line)   // received a new line
+         {
+               if(find_string(buffer,CMTI)) // if new SMS indicated
+            {
+               int sms_index;
+               sms_index=get_sms_index(buffer); // find where new sms was stored
+               clear_buffer();
+               if(read_sms(sms_index)) // try to read the new sms
+               {
+                  decode_command();       // command was found, do it
+                  delete_sms(sms_index);  // delete the sms
+                  delay_ms(1000);      
+                  enable_interrupts(int_rda);
+                  send_sms(myNumber,"Done"); // send an SMS to my number with the text "Done"
+               }
+               
+            }
+
+            clear_buffer();
+         }
+
+         MODEM_OK_LED=~MODEM_OK_LED;   // LED on port A0 flashes as long as the mobile is 
+                                       // connected, configured, and ready to receive sms
+         delay_ms(100);
+      }
+
+      
+   }
+}
+
+int find_string(char* buf,char* word)
+{
+   char*srch_word;
+   srch_word=strstr(buf,word);
+   if(srch_word>0)return(1);
+   else return(0);
+}
+
+   
+void bluetooth_command_mode()
+{
+   int n;
+
+   start:
+   n=0;
+   new_line=0;
+   printf(CMD_MODE);
+
+   while(!new_line)
+   {
+      delay_ms(100);
+      n++;
+
+      if(n>20)
+         goto start;
+   }
+
+   if(find_string(buffer,CMD))
+   {
+      mode=command_mode;
+   }
+
+   clear_buffer();
+
+}
+
+int bluetooth_connect(char* MAC)
+{
+   int n=0;
+   int connection;
+   printf("C,%s\r",MAC);
+   delay_ms(500);
+   new_line=0;
+
+   while(!new_line)
+   {
+      delay_ms(100);
+      n++;
+
+      if(n>100)
+      {
+         return(0);
+      }
+   }
+
+   if(find_string(buffer,CONNECTED))
+   {
+      connection=1;
+      mode=data_mode;
+   }
+
+   else
+   {
+      connection=0;
+   }
+
+   clear_buffer();
+   return(connection);
+}
+
+void clear_buffer()
+{
+   int n;
+   for(n=0;buffer[n]!=0;n++)
+   {
+      buffer[n]=0;
+   }
+
+   new_line=0;
+   i=0;
+}
+
+int get_sms_index(char* buffer)
+{
+   char sms_index[3];
+   int n;
+   for(n=0;buffer[n]!=0;n++)
+   {
+      if(buffer[n]==',')
+      {
+         if(buffer[n+1]!=0)sms_index[0]=buffer[n+1];
+
+         if(buffer[n+2]!=0)
+         {
+            sms_index[1]=buffer[n+2];
+            sms_index[2]=0;
+         }
+
+         else sms_index[1]=0;
+      }
+   }
+
+   return(atoi(sms_index));
+}
+
+int read_sms(int index)
+{
+   printf("%s%u\r",SMS_READ,index);
+   while(!new_line);
+   clear_buffer();
+   while(!new_line);
+   clear_buffer();
+   while(!new_line);
+   disable_interrupts(int_rda);
+   delay_ms(100);
+   if(find_string(buffer,"DEV"))
+   {
+      strcpy(SMS_CONTENT,buffer);
+      return(1);
+   }
+   return(0);
+}
+
+
+void delete_sms(int index)
+{
+   printf("%s%u\r",SMS_DELETE,index);
+   delay_ms(100);
+}
+void decode_command()
+{
+   char device_index;
+   int ON=0;
+   int n;
+   
+   for(n=0;SMS_CONTENT[n]!=0;n++)
+   {
+      if(SMS_CONTENT[n]=='D' && SMS_CONTENT[n+1]=='E' && SMS_CONTENT[n+2]=='V')
+      {
+         device_index=SMS_CONTENT[n+3];
+
+         if(SMS_CONTENT[n+5]=='O' && SMS_CONTENT[n+6]=='N') ON=1;
+      }
+   }
+   
+   switch(device_index)
+   {
+      case '1':
+      if(ON) L1=1;
+      else L1=0;
+      break;
+      
+      case '2':
+      if(ON) L2=1;
+      else L2=0;
+      break;
+      
+      case '3':
+      if(ON) L3=1;
+      else L3=0;
+      break;
+      
+      case '4':
+      if(ON) L4=1;
+      else L4=0;
+      break;
+   }
+   
+}
+
+void send_sms(char* number,char* text)
+{
+   printf("%s",SMS_SEND);
+   delay_ms(10);
+   printf("%s",number);
+   delay_ms(10);
+   fputc(0x0D);
+   delay_ms(100);
+   printf("%s",text);
+   fputc(0x1A);
+   delay_ms(1000);
+
+}
+#int_rda // bluetooth received data interrupt
+
+void isr()
+{
+   char c;
+   c=getc();//read receieved byte
+   if(c!=0x0A)
+     { buffer[i++]=c;
+      if(i==64) i=0;
+     }
+   else
+   new_line=1;
+}

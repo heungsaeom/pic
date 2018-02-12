@@ -1,0 +1,36 @@
+#include <16F877A.h>
+#use delay(crystal=20000000)
+#use rs232(baud=9600,parity=N,xmit=PIN_C6,rcv=PIN_C7,bits=8,stream=PORT1)
+void eeprom_write_string(unsigned int8 addr,unsigned char*str)
+{
+   while(*str)
+   {
+   write_eeprom(addr,*str);
+   addr++;
+   str++;
+   }
+}
+void eeprom_read_string(unsigned int8 addr, unsigned char* str,unsigned int8 len)
+{
+   unsigned int8 i;
+   for(i=0;i<len;i++)
+   {
+      str[i]=read_eeprom(addr+i);
+   }
+   str[len]=0;
+}
+void main()
+{
+    unsigned char str[20];
+    unsigned char text[20]="hung";
+   eeprom_write_string(0x01,text);
+   while(TRUE)
+   {
+      eeprom_read_string(0x01,str,4);
+      printf(str);
+      putc(13);
+      putc(10);     
+      delay_ms(300); 
+   }
+
+}
