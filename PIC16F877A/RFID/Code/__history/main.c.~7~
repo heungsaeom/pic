@@ -1,0 +1,87 @@
+#include <main.h>
+//khai bao bien toan cuc
+//*****************************************************************************
+char key[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+//khai bao cac ten chuong trinh con
+//*****************************************************************************
+void _CaiDatLCD(void);
+//su dung ngat
+//*****************************************************************************
+
+//chuong trinh chinh
+//*****************************************************************************
+//*****************************************************************************
+void main()
+{
+   char UID[6],i,size;
+   unsigned int TagType;  
+   char writeData[] = "Kevifa.com";
+
+   _CaiDatLCD();
+   MFRC522_Init ();
+   
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"RFID RC522");
+   
+   while(TRUE)
+   {
+      //TODO: User Code
+       if (MFRC522_isCard (&TagType)) //Check any card
+       {
+           lcd_gotoxy(1,1);
+           printf(lcd_putc,"TAG=%x     ",TagType);
+        
+           if(MFRC522_ReadCardSerial (&UID)) 
+           {
+               lcd_gotoxy(1,2);
+               printf(lcd_putc,"ID:");
+               for(i=0;i<5;i++)
+               {
+                  printf(lcd_putc,"%x",UID[i]);
+               }
+               
+               size = MFRC522_SelectTag (&UID);
+           }
+           
+            if(MFRC522_Auth (PICC_AUTHENT1A, 7, &key, &UID) == 0) //authentication key A   
+            {
+               //Write data to block 1  
+               lcd_gotoxy(13,1); 
+               MFRC522_Write (1,&writeData);
+               printf (lcd_putc, "W-A!"); 
+            }                                        
+            else if(MFRC522_Auth (PICC_AUTHENT1B, 7, &key, &UID) == 0) //authentication key B 
+            {  
+               //Write data to block 1 
+               lcd_gotoxy(13,1); 
+               MFRC522_Write (1,&writeData);
+               printf (lcd_putc, "W-B!"); 
+            }                                          
+            else
+            {   
+               lcd_gotoxy(13,1);   
+               printf (lcd_putc, "W-Err!"); 
+               continue;                             
+            }
+                                                    
+            if(MFRC522_Read (4,&writeData) == 0)   
+            {
+               lcd_gotoxy(1,1);
+               printf (lcd_putc, "\n%s", writeData);
+            }
+
+            //Ngu dong
+            MFRC522_Halt () ;           
+       }             
+   }
+
+}
+//viet noi dung cho cac chuong trinh con da duoc dinh nghia truoc do
+//*****************************************************************************
+//*****************************************************************************
+void _CaiDatLCD(void)
+{
+   lcd_init();//khoi dong module LCD
+   lcd_putc('\f');//xoa trang man hinh LCD
+}
+

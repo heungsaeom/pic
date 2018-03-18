@@ -1,0 +1,25 @@
+[PROJECT]
+Target=main.hex
+Processor_Text=PIC16F887
+CCSVerions=5.015
+Compiler=PCM
+CCSVersion=5.015
+[Target Data]
+FileList=main.c
+[Directories]
+Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\
+[E:\C\Documents\KHAC\Tran Dinh Hieu\QUAN LY SACH\Code\main]
+Type=4
+[mru-list]
+1=main.c
+[Opened Files]
+1=main.c
+2=C:\Program Files\PICC\drivers\math.h
+3=main.h
+4=Built_in.h
+5=
+[main.c]
+Type=4
+[Units]
+Count=1
+1=main (main)
